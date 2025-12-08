@@ -1,0 +1,328 @@
+import re
+import urllib.parse
+import streamlit as st
+import random
+import os
+
+# Import image handling functions for library fallback
+try:
+    from image_handling import load_image_from_library, get_image_library
+except ImportError:
+    load_image_from_library = None
+    get_image_library = None
+
+# --- 0. COMPONENT COMPATIBILITY ---
+# Define which components work in WeChat vs HTML
+COMPONENT_COMPATIBILITY = {
+    "hero": {"wechat": True, "html": True},
+    "col-2": {"wechat": True, "html": True},
+    "col-3": {"wechat": True, "html": True},
+    "steps": {"wechat": True, "html": True},
+    "timeline": {"wechat": True, "html": True},
+    "reveal": {"wechat": False, "html": True},  # Uses SVG animations - not WeChat compatible
+    "badge": {"wechat": True, "html": True},
+    "button": {"wechat": True, "html": True},
+    "card": {"wechat": True, "html": True},
+    "img": {"wechat": True, "html": True},
+    "table": {"wechat": True, "html": True},
+}
+
+# --- 1. TOOLBAR CONFIGURATION ---
+INSERTION_TOOLS = {
+    "➕ Hero": "::: hero\n# Title\nSubtitle\n:::",
+    "➕ 2-Col": "::: col-2\nLeft\n--split--\nRight\n:::",
+    "➕ 3-Col": "::: col-3\nOne\n--split--\nTwo\n--split--\nThree\n:::",
+    "➕ Steps": "::: steps\n1. Step One\n2. Step Two\n:::",
+    "➕ Timeline": "::: timeline\n2024 Start\n2025 Launch\n:::",
+    "➕ Table": "::: table\nHeader 1 | Header 2 | Header 3\nRow 1 Col 1 | Row 1 Col 2 | Row 1 Col 3\nRow 2 Col 1 | Row 2 Col 2 | Row 2 Col 3\n:::",
+    "➕ Reveal": "::: reveal\nSecret Content\n--cover--\n👆\n:::",
+    "➕ Badge": "[badge: NEW]",
+    "➕ Button": "\n[Button Label](https://link.com)\n",
+    "➕ Card": "::: card\n## Card Title\nCard content here.\n:::",
+    "➕ AI Image": "[IMG: describe your image]"
+}
+
+# --- 2. PARSING ENGINE ---
+def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)"):
+    s = styles
+    # Helper: Styles for WeChat images
+    img_s = f'style="{s["img"]}"' if mode=="wechat" else ''
+    
+    # --- A. IMAGE HANDLERS ---
+    
+    # 1. Local Images (Session State + Library Fallback)
+    # Replaces [LOCAL: filename.png] with base64 data URI
+    def local_img_repl(m):
+        f_name = m.group(1).strip()
+        
+        # First, try session state
+        if "local_images" in st.session_state and f_name in st.session_state.local_images:
+            b64 = st.session_state.local_images[f_name]
+            return f'\n<img src="{b64}" {img_s} alt="Image">\n'
+        
+        # If not in session state, try loading from library
+        if load_image_from_library:
+            # Try loading by exact filename first
+            img_data = load_image_from_library(f_name)
+            if img_data:
+                # Cache it in session state for future use
+                if "local_images" not in st.session_state:
+                    st.session_state.local_images = {}
+                st.session_state.local_images[f_name] = img_data
+                return f'\n<img src="{img_data}" {img_s} alt="Image">\n'
+            
+            # If not found by filename, try searching by original_name in metadata
+            if get_image_library:
+                library_images = get_image_library()
+                # Normalize the search name (remove path separators, handle case)
+                search_name = f_name.strip()
+                search_name_lower = search_name.lower()
+                
+                for img_info in library_images:
+                    # Check if the original_name matches (exact or case-insensitive)
+                    original_name = img_info.get("original_name", "")
+                    original_name_lower = original_name.lower()
+                    
+                    # Try multiple matching strategies
+                    if (original_name == search_name or 
+                        original_name_lower == search_name_lower or
+                        original_name.endswith(search_name) or
+                        original_name_lower.endswith(search_name_lower) or
+                        os.path.basename(original_name) == os.path.basename(search_name)):
+                        # Found by original name, load the actual library file
+                        library_filename = img_info["filename"]
+                        img_data = load_image_from_library(library_filename)
+                        if img_data:
+                            # Cache it in session state for future use
+                            if "local_images" not in st.session_state:
+                                st.session_state.local_images = {}
+                            st.session_state.local_images[f_name] = img_data
+                            return f'\n<img src="{img_data}" {img_s} alt="Image">\n'
+        
+        return f"\n> ⚠️ Image not found: {f_name}\n"
+    
+    # Case Insensitive regex for [LOCAL: ...]
+    text = re.sub(r'\[LOCAL:\s*(.*?)\]', local_img_repl, text, flags=re.IGNORECASE)
+
+    # 2. AI / Web Images
+    # Replaces [IMG: prompt] with URL based on provider
+    def web_img_repl(m):
+        prompt = m.group(1)
+        encoded = urllib.parse.quote(prompt)
+        seed = random.randint(0, 9999)
+        
+        if img_provider == "Picsum (Stock)":
+            # Picsum doesn't support text prompts, so we use seed
+            url = f"https://picsum.photos/seed/{seed}/800/450"
+        elif img_provider == "Placeholder (Text)":
+            # Simple placeholder with text
+            url = f"https://placehold.co/800x450/EEE/31343C?text={encoded}"
+        else:
+            # Pollinations AI (Default)
+            url = f"https://image.pollinations.ai/prompt/{encoded}?width=800&height=450&nologo=true&seed={seed}"
+            
+        return f'\n<img src="{url}" {img_s} alt="AI Generated">\n'
+    
+    # Case Insensitive regex for [IMG: ...]
+    text = re.sub(r'\[IMG:\s*(.*?)\]', web_img_repl, text, flags=re.IGNORECASE)
+    
+    # --- B. LAYOUT COMPONENTS ---
+
+    # 3. Hero Component
+    # Syntax: ::: hero \n # Title \n Sub \n :::
+    def hero_r(m):
+        c = m.group(1)
+        if mode=="wechat": 
+            # CAN MODIFICATION: Force center alignment for Hero H1 specifically
+            # We grab the H1 style, but swap text-align:left for center
+            h1_style_raw = s["h1"]
+            h1_centered = h1_style_raw.replace("text-align: left", "text-align: center")
+            if "text-align: center" not in h1_centered:
+                h1_centered += " text-align: center;"
+            
+            # Replace markdown # with styled H1
+            c = re.sub(r'^# (.*)', f'<h1 style="{h1_centered}">\\1</h1>', c, flags=re.MULTILINE)
+            # Return wrapped in section
+            return f'<section style="{s["hero"]}">{c}</section>' 
+        else:
+            # Web preview class
+            return f'<div class="mp-hero">{c}</div>'
+            
+    text = re.sub(r'(?is):::\s*hero\n(.*?)\n:::', hero_r, text)
+    
+    # 4. Steps Component
+    # Syntax: ::: steps \n 1. Item \n 2. Item \n :::
+    def steps_r(m):
+        lines = [l.strip() for l in m.group(1).split('\n') if l.strip()]
+        # Use section with clear:both to prevent interference with other components
+        html = '<section class="mp-steps-wrapper" style="margin: 20px 0; display: block; clear: both; width: 100%;">'
+        for i, line in enumerate(lines, 1):
+            # Remove existing numbering like "1." or "2)"
+            content = re.sub(r'^\d+[\.\)]\s*', '', line)
+            
+            if mode == "wechat": 
+                html += (f'<div style="{s["step_box"]}">'
+                         f'<span style="{s["step_num"]}">{i}</span>'
+                         f'<span style="flex: 1 1 auto; display: inline-block; vertical-align: middle;">{content}</span></div>')
+            else: 
+                html += (f'<div class="mp-step">'
+                         f'<div class="mp-step-num">{i}</div>'
+                         f'<div>{content}</div></div>')
+        html += '</section>'
+        return html
+        
+    text = re.sub(r'(?is):::\s*steps\n(.*?)\n:::', steps_r, text)
+
+    # 5. Timeline Component
+    # Syntax: ::: timeline \n Year Event \n :::
+    def time_r(m):
+        lines = [l.strip() for l in m.group(1).split('\n') if l.strip()]
+        # Use section with clear:both to prevent interference with other components
+        html = '<section class="mp-timeline-wrapper" style="margin: 20px 0; padding-left: 15px; display: block; clear: both; width: 100%;">'
+        for line in lines:
+            if mode == "wechat": 
+                html += (f'<div style="{s["time_box"]}">'
+                         f'<span style="{s["time_dot"]}"></span>'
+                         f'<span style="display: inline-block; vertical-align: middle;">{line}</span></div>')
+            else: 
+                html += (f'<div class="mp-timeline-item">'
+                         f'<div class="mp-timeline-dot"></div>{line}</div>')
+        html += '</section>'
+        return html
+        
+    text = re.sub(r'(?is):::\s*timeline\n(.*?)\n:::', time_r, text)
+
+    # 6. Reveal Component (Interactive SVG)
+    # Syntax: ::: reveal \n Hidden \n --cover-- \n Tap \n :::
+    def reveal_r(m):
+        content = m.group(1).strip()
+        cover_text = m.group(2).strip() if m.group(2) else "Tap to Reveal"
+        unique_id = f"rev_{random.randint(10000, 99999)}"
+        
+        # Base styles for the inner container
+        inner_style = (f'border: 1px dashed #ccc; padding: 15px; border-radius: 8px; '
+                       f'background: #fff; min-height: 100px; display: flex; '
+                       f'align-items: center; justify-content: center; text-align: center;')
+        
+        # CAN FIX: Use s['primary'] for the SVG rect fill color
+        primary_color = s.get("primary", "#4A90E2")
+        
+        svg_overlay = f"""
+        <div style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:10;">
+            <svg style="width:100%; height:100%; cursor:pointer;" viewBox="0 0 300 100" preserveAspectRatio="none">
+                <g style="cursor:pointer;" pointer-events="all">
+                    <rect width="100%" height="100%" fill="{primary_color}" rx="8" />
+                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-weight="bold" font-size="24">{cover_text}</text>
+                    <animate attributeName="opacity" begin="click;touchstart" from="1" to="0" dur="0.3s" fill="freeze" restart="never" />
+                    <set attributeName="visibility" to="hidden" begin="click+0.3s;touchstart+0.3s" />
+                </g>
+            </svg>
+        </div>
+        """
+        
+        return f"""
+<section style="{s['reveal_box']}" id="{unique_id}">
+    <div style="{inner_style}">{content}</div>
+    {svg_overlay}
+</section>
+"""
+    # Modified Regex to handle potentially messy newlines around the tags
+    text = re.sub(r'(?is):::\s*reveal\s*(.*?)\s*--cover--\s*(.*?)\s*:::', reveal_r, text)
+
+    # 7. Custom Badge Replacement
+    # Syntax: [badge: Text]
+    text = re.sub(r'\[badge:\s*(.*?)\]', f'<span style="{s["badge"]}">\\1</span>', text, flags=re.IGNORECASE)
+
+    # 8. Grid Layout (2 or 3 columns)
+    # Syntax: ::: col-2 \n A --split-- B \n :::
+    def grid_r(m, cols):
+        parts = [x.strip() for x in m.group(1).split("--split--") if x.strip()]
+        if len(parts) < 2: return m.group(0) # fallback if not enough parts
+        
+        if mode=="wechat":
+            col_html = "".join([f'<div style="{s["col"]}">{p}</div>' for p in parts])
+            return f'<section style="{s["grid"]}">{col_html}</section>'
+        else:
+            col_html = "".join([f'<div class="mp-col">{p}</div>' for p in parts])
+            return f'<div class="mp-grid">{col_html}</div>'
+    
+    text = re.sub(r'(?is):::\s*col-2\n(.*?)\n:::', lambda m: grid_r(m, 2), text)
+    text = re.sub(r'(?is):::\s*col-3\n(.*?)\n:::', lambda m: grid_r(m, 3), text)
+
+    # 8.5. Table Component
+    # Syntax: ::: table \n Header1 | Header2 \n Row1Col1 | Row1Col2 \n :::
+    def table_r(m):
+        lines = [l.strip() for l in m.group(1).split('\n') if l.strip()]
+        if not lines:
+            return m.group(0)
+        
+        # Common table styles
+        table_style = "width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;"
+        th_style = f"background-color: {s.get('primary', '#4A90E2')}; color: white; padding: 12px 15px; text-align: left; border: 1px solid #ddd; font-weight: bold;"
+        td_style = "padding: 12px 15px; text-align: left; border: 1px solid #ddd;"
+        tr_even_style = f"background-color: {s.get('card', '#f8f9fa')};"
+        
+        html = f'<table style="{table_style}">'
+        
+        for idx, line in enumerate(lines):
+            cells = [c.strip() for c in line.split('|')]
+            if idx == 0:
+                # Header row
+                html += '<thead><tr>'
+                for cell in cells:
+                    html += f'<th style="{th_style}">{cell}</th>'
+                html += '</tr></thead><tbody>'
+            else:
+                # Data row
+                row_bg = tr_even_style if idx % 2 == 0 else ""
+                html += f'<tr style="{row_bg}">'
+                for cell in cells:
+                    html += f'<td style="{td_style}">{cell}</td>'
+                html += '</tr>'
+        
+        html += '</tbody></table>'
+        return html
+    
+    text = re.sub(r'(?is):::\s*table\n(.*?)\n:::', table_r, text)
+
+    # --- C. DECORATIONS ---
+
+    # 9. Button Links
+    # Syntax: [Label](url) on its own line
+    if mode=="wechat": 
+        text = re.sub(r'(?m)^\[(.*?)\]\((.*?)\)\s*$', 
+                      f'<div style="{s["btn_wrap"]}"><a href="\\2" style="{s["btn"]}">\\1</a></div>', text)
+    else: 
+        text = re.sub(r'(?m)^\[(.*?)\]\((.*?)\)\s*$', 
+                      f'<div class="mp-btn-container"><a href="\\2" class="mp-btn">\\1</a></div>', text)
+    
+    # 10. Card Component (Explicit syntax to avoid conflict with H2)
+    # Syntax: ::: card \n ## Title \n Content \n :::
+    def card_r(m):
+        content = m.group(1).strip()
+        # Extract header (first ## line) and body (rest)
+        lines = content.split('\n')
+        header = None
+        body_lines = []
+        
+        for line in lines:
+            line_stripped = line.strip()
+            if line_stripped.startswith('##') and header is None:
+                header = line_stripped.lstrip('#').strip()
+            elif line_stripped:  # Only add non-empty lines to body
+                body_lines.append(line)
+        
+        body = '\n'.join(body_lines).strip()
+        h_col = s.get("card_h_color", "#007aff")
+        
+        if mode=="wechat": 
+            return (f'<section style="{s["card"]}">'
+                    f'<span style="font-weight:bold; font-size:16px; color:{h_col}">{header or "Card"}</span>'
+                    f'<div style="margin-top:8px">{body}</div></section>')
+        else: 
+            return f'<div class="mp-card"><h3>{header or "Card"}</h3>{body}</div>'
+    
+    # Card component - handle multiline content properly
+    text = re.sub(r'(?is):::\s*card\s*\n(.*?)\n:::', card_r, text)
+    
+    return text
