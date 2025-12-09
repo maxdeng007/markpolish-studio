@@ -50,6 +50,37 @@ def check_connection(engine, url, key):
                 return False, f"❌ Error {response.status_code}"
         except: 
             return False, "❌ Network Error"
+    elif engine == "OpenAI":
+        if not key:
+            return False, "⚠️ Missing Key"
+        try:
+            headers = {"Authorization": f"Bearer {key}"}
+            response = requests.get("https://api.openai.com/v1/models", headers=headers, timeout=3)
+            if response.status_code == 200:
+                return True, "✅ Online (OpenAI)"
+            elif response.status_code == 401:
+                return False, "❌ Invalid Key"
+            else:
+                return False, f"❌ Error {response.status_code}"
+        except:
+            return False, "❌ Network Error"
+    elif engine == "Gemini":
+        if not key:
+            return False, "⚠️ Missing Key"
+        try:
+            response = requests.get(
+                "https://generativelanguage.googleapis.com/v1beta/models",
+                params={"key": key},
+                timeout=3,
+            )
+            if response.status_code == 200:
+                return True, "✅ Online (Gemini)"
+            elif response.status_code in (401, 403):
+                return False, "❌ Invalid Key"
+            else:
+                return False, f"❌ Error {response.status_code}"
+        except:
+            return False, "❌ Network Error"
     return False, "Unknown"
 
 
@@ -158,11 +189,11 @@ def run_ai(text, context, config, task_type="polish", content_type=None, availab
         sys_msg = (
             "You are a Markdown Formatting Assistant. "
             "Improve the structure and formatting of the content. "
-            "1. Suggest better use of headings, lists, and components. "
-            "2. Improve readability and flow. "
-            f"3. Add appropriate {format_components_note} where they would enhance the content. "
-            "4. Keep the original content and meaning. "
-            "5. CRITICAL: Protect existing [IMG] and ::: tags."
+            "1. Keep the original content, order, and meaning; do not add boilerplate or placeholders. "
+            "2. Improve readability and flow with headings/lists, but do NOT add HTML comments or markers. "
+            f"3. Add appropriate {format_components_note} only if they clearly improve structure; otherwise keep existing layout. "
+            "4. Do not duplicate content or insert promotional text. "
+            "5. CRITICAL: Protect existing [IMG] and ::: tags; do not wrap them or alter their content."
             f"{style_instruction}"
         )
         user_content = f"CONTENT:\n{text}"

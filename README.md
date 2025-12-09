@@ -69,6 +69,20 @@ MarkPolish Studio/
 
 ## Usage
 
+### Quick Start (EN)
+- Create a virtualenv: `python -m venv venv && source venv/bin/activate`
+- Install deps: `pip install -r requirements.txt`
+- Run: `streamlit run app.py`
+- Configure AI in the sidebar (OpenRouter or Ollama); leave as “None” to disable AI.
+- Autosave is on; use **💾 Force Save Now** for a manual backup.
+
+### 快速开始 (中文)
+- 创建虚拟环境：`python -m venv venv && source venv/bin/activate`
+- 安装依赖：`pip install -r requirements.txt`
+- 运行：`streamlit run app.py`
+- 在侧边栏配置 AI（OpenRouter 或本地 Ollama）；若不使用 AI 可保持 “None”。
+- 自动保存始终开启；需要手动备份时点 **💾 立即强制保存**。
+
 ### Creating Content
 
 1. **Start a New Project**: Click "New Project" in the sidebar
@@ -112,6 +126,15 @@ Choose from multiple themes optimized for different content types:
 - **PDF Export**: Export as PDF (requires PDF library)
 - **WeChat Format**: Optimized for WeChat publishing
 
+### Smoke Test Checklist (EN / 中文)
+- File load/delete/history buttons work; file info shows; saving creates/updates the file.
+- AI engine set → each AI action runs; buttons disable while running; toasts/spinners show; output updates.
+- Empty编辑器/Editor empty → AI actions show “Please add text” toast; no spinner/no crash.
+- Rapid double-click on AI buttons is debounced; “another action running” toast appears if busy.
+- Language toggle EN/中文 keeps AI config (engine/key/model) unchanged.
+- “Suggest Components” returns buttons; insert works and toasts appear; clear suggestions works.
+- Force Save works when a filename is provided; autosave still functions.
+
 ## Dependencies
 
 ### Core Dependencies
@@ -132,7 +155,7 @@ Choose from multiple themes optimized for different content types:
 ### AI Configuration
 
 Configure AI settings in the sidebar:
-- **Engine**: Choose AI provider (OpenAI, OpenRouter, Ollama)
+- **Engine**: Choose AI provider (Ollama Local, Gemini, OpenAI, OpenRouter)
 - **Model**: Select AI model
 - **API Key**: Enter your API key
 

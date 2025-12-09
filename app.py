@@ -150,6 +150,17 @@ TRANSLATIONS = {
         "analyzing_structure": "Analyzing structure...",
         "ai_processing": "AI Processing",
         "ai_working": "AI is working...",
+        "ai_status_idle": "AI is idle.",
+        "ai_status_last_action": "Last AI action: {action}",
+        "ai_status_failed": "Last AI action failed.",
+        "ai_status_success": "Last AI action completed.",
+        "ai_retry": "🔁 Retry last AI action",
+        "ai_input_too_long": "Content is too long for AI. Please shorten it.",
+        "help_generate_titles": "Generate titles from your current content.",
+        "help_expand_content": "Expand the current content with more detail.",
+        "help_smart_format": "Auto-format and tidy your content.",
+        "help_suggest_components": "Get layout/component suggestions from your content.",
+        "help_polish_with_context": "Polish content using the optional context notes.",
         "polishing_content": "Polishing with context...",
         "ai_action_in_progress": "Another AI action is running.",
         "ai_action_debounced": "Please wait a moment before starting another AI action.",
@@ -183,6 +194,8 @@ TRANSLATIONS = {
         "download_html": "📥 Download HTML",
         "download_pdf": "📥 Download PDF",
         "download_word": "📥 Download Word",
+        "force_save": "💾 Force Save Now",
+        "force_save_help": "Autosave runs automatically; use Force Save for manual backup.",
     },
     "zh": {
         "app_title": "MarkPolish V1.0",
@@ -326,6 +339,17 @@ TRANSLATIONS = {
         "analyzing_structure": "正在分析结构...",
         "ai_processing": "AI 处理中",
         "ai_working": "AI 正在处理...",
+        "ai_status_idle": "AI 空闲中。",
+        "ai_status_last_action": "上次 AI 操作：{action}",
+        "ai_status_failed": "上次 AI 操作失败。",
+        "ai_status_success": "上次 AI 操作已完成。",
+        "ai_retry": "🔁 重试上一次 AI 操作",
+        "ai_input_too_long": "内容过长，无法调用 AI，请先精简。",
+        "help_generate_titles": "根据当前内容生成标题。",
+        "help_expand_content": "为当前内容补充细节和篇幅。",
+        "help_smart_format": "自动格式化并整理内容。",
+        "help_suggest_components": "根据内容给出布局/组件建议。",
+        "help_polish_with_context": "结合可选上下文对内容进行润色。",
         "polishing_content": "正在结合上下文润色内容...",
         "ai_action_in_progress": "另一项 AI 操作正在运行。",
         "ai_action_debounced": "请稍等片刻再开始新的 AI 操作。",
@@ -359,6 +383,8 @@ TRANSLATIONS = {
         "download_html": "📥 下载 HTML",
         "download_pdf": "📥 下载 PDF",
         "download_word": "📥 下载 Word",
+        "force_save": "💾 立即强制保存",
+        "force_save_help": "已自动保存，需手动备份时可点击强制保存。",
     }
 }
 
@@ -722,6 +748,25 @@ def main():
     # Check for share link in query parameters
     query_params = st.query_params
     
+    # Helper: enforce only one sidebar expander open (or all closed)
+    def enforce_single_sidebar_open(state_dict):
+        if not isinstance(state_dict, dict):
+            return state_dict
+        open_keys = [k for k, v in state_dict.items() if v]
+        preferred_default = "ai_assistant"
+        if not open_keys:
+            # If nothing is open, fall back to preferred default
+            for k in state_dict.keys():
+                state_dict[k] = (k == preferred_default)
+            st.session_state.last_sidebar_open = preferred_default
+            return state_dict
+        preferred = st.session_state.get("last_sidebar_open") or (preferred_default if preferred_default in state_dict else None)
+        target = preferred if (preferred and preferred in open_keys) else open_keys[-1]
+        for k in state_dict.keys():
+            state_dict[k] = (k == target)
+        st.session_state.last_sidebar_open = target
+        return state_dict
+    
     # Read expander state from query params (set by JavaScript)
     # This allows JavaScript to update state
     if "expander_state" in query_params:
@@ -740,6 +785,10 @@ def main():
                 # Update session state with JavaScript-detected state
                 for key, value in js_state.items():
                     st.session_state.sidebar_expanded[key] = value
+                # Remember last open expander for next render
+                js_open = [k for k, v in js_state.items() if v]
+                if js_open:
+                    st.session_state.last_sidebar_open = js_open[-1]
                 # Mark as processed
                 st.session_state.last_expander_state_hash = current_hash
             except Exception as e:
@@ -779,6 +828,9 @@ def main():
         st.session_state.undo_stack = []
     if "redo_stack" not in st.session_state:
         st.session_state.redo_stack = []
+    if "simple_mode" not in st.session_state:
+        # Default to Simple Mode for a cleaner first-time experience
+        st.session_state.simple_mode = True
     if "current_project_name" not in st.session_state:
         st.session_state.current_project_name = None
     if "keyboard_action" not in st.session_state:
@@ -798,6 +850,71 @@ def main():
     
     # Cleanup old auto-save files on startup
     cleanup_old_autosave_files()
+
+    # Ensure only one sidebar section is open at a time (server-side safety)
+    if "sidebar_expanded" in st.session_state:
+        st.session_state.sidebar_expanded = enforce_single_sidebar_open(st.session_state.sidebar_expanded)
+
+    # Tighten main content gutters to give editor/preview more horizontal space
+    tight_layout_css = """
+    <style>
+    :root {
+        --mp-gutter: 0.75rem;
+        --mp-gutter-mobile: 0.5rem;
+    }
+    /* Reduce Streamlit default side padding and prevent max-width from shrinking content */
+    .stAppViewContainer .main .block-container {
+        padding-left: var(--mp-gutter) !important;
+        padding-right: var(--mp-gutter) !important;
+        max-width: 100% !important;
+    }
+    /* Shrink left/right padding on vertical blocks (editor/preview wrapper) */
+    .stVerticalBlock[data-testid="stVerticalBlock"],
+    .st-emotion-cache-tn0cau {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    /* Tighten column gutters */
+    div[data-testid="column"] > div {
+        padding-left: 0.35rem !important;
+        padding-right: 0.35rem !important;
+    }
+    .stHorizontalBlock {
+        gap: 0.7rem !important;
+    }
+    /* Normalize buttons / touch targets */
+    .stButton button, button[kind="secondary"] {
+        padding: 0.55rem 0.7rem !important;
+        min-height: 44px;
+        border-radius: 8px;
+    }
+    .stTabs [data-baseweb="tab"] button {
+        min-height: 36px;
+    }
+    @media (max-width: 900px) {
+        .stAppViewContainer .main .block-container {
+            padding-left: var(--mp-gutter-mobile) !important;
+            padding-right: var(--mp-gutter-mobile) !important;
+        }
+    }
+
+    /* Sticky editor status bar */
+    .mp-editor-status {
+        position: sticky;
+        bottom: 0;
+        padding: 0.35rem 0;
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(6px);
+        z-index: 5;
+    }
+    [data-theme="dark"] .mp-editor-status {
+        background: rgba(17,17,17,0.85);
+    }
+    </style>
+    """
+    st.markdown(tight_layout_css, unsafe_allow_html=True)
     
     # Check for auto-saved content on startup
     # Only show prompt if it hasn't been dismissed in this session
@@ -874,6 +991,34 @@ def main():
             
             return state;
         }
+
+        function enforceSingleOpen(preferredExpander = null) {
+            const expanders = Array.from(document.querySelectorAll('[data-testid="stExpander"]'));
+            if (expanders.length === 0) return;
+            
+            // Determine which expander should remain open
+            let target = preferredExpander;
+            const openOnes = expanders.filter(exp => exp.hasAttribute('open') || exp.getAttribute('open') === 'true');
+            if (!target && openOnes.length > 0) {
+                target = openOnes[openOnes.length - 1];
+            }
+            if (!target && openOnes.length === 0) {
+                target = expanders.find(exp => (exp.textContent || '').includes('🤖')) || null;
+            }
+            
+            // If nothing is open, do nothing (allows "all folded")
+            if (!target) return;
+            
+            expanders.forEach(exp => {
+                if (exp !== target) {
+                    exp.removeAttribute('open');
+                    const toggleIcon = exp.querySelector('[data-testid="stExpanderToggleIcon"]');
+                    if (toggleIcon) {
+                        toggleIcon.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+        }
         
         function updateState() {
             const currentState = getExpanderState();
@@ -902,17 +1047,26 @@ def main():
         
         // Watch for expander clicks
         document.addEventListener('click', function(e) {
-            if (e.target.closest('[data-testid="stExpander"]') || 
-                e.target.closest('[data-testid="stExpanderToggleIcon"]')) {
+            const expanderEl = e.target.closest('[data-testid="stExpander"]');
+            const toggleIcon = e.target.closest('[data-testid="stExpanderToggleIcon"]');
+            if (expanderEl || toggleIcon) {
+                const targetExpander = expanderEl || (toggleIcon ? toggleIcon.closest('[data-testid="stExpander"]') : null);
                 clearTimeout(updateTimer);
-                updateTimer = setTimeout(updateState, 200);
+                // Slight delay so the native toggle state updates first
+                setTimeout(() => {
+                    enforceSingleOpen(targetExpander);
+                    updateTimer = setTimeout(updateState, 200);
+                }, 80);
             }
         }, true);
         
         // Watch for DOM changes
         const observer = new MutationObserver(function() {
             clearTimeout(updateTimer);
-            updateTimer = setTimeout(updateState, 300);
+            updateTimer = setTimeout(function() {
+                enforceSingleOpen();
+                updateState();
+            }, 300);
         });
         
         function setupTracking() {
@@ -934,7 +1088,10 @@ def main():
                 } catch(e) {}
                 
                 // Initial state check
-                setTimeout(updateState, 500);
+                setTimeout(function() {
+                    enforceSingleOpen();
+                    updateState();
+                }, 500);
             } else {
                 setTimeout(setupTracking, 200);
             }
@@ -953,7 +1110,7 @@ def main():
         # Settings Row: Simple Mode and Language Toggle
         settings_col1, settings_col2 = st.columns(2)
         with settings_col1:
-            simple_mode = st.toggle(f"✨ {get_text('simple_mode')}", value=st.session_state.get("simple_mode", False), key="simple_mode")
+            simple_mode = st.toggle(f"✨ {get_text('simple_mode')}", value=st.session_state.get("simple_mode", True), key="simple_mode")
         with settings_col2:
             # Language toggle: False = English, True = Chinese
             current_lang = st.session_state.get("ui_language", "en")
@@ -962,6 +1119,14 @@ def main():
             new_lang = "zh" if lang_toggle else "en"
             if new_lang != current_lang:
                 st.session_state.ui_language = new_lang
+                # Refresh AI status text to current language when not busy
+                if not st.session_state.get("ai_busy"):
+                    key = st.session_state.get("last_ai_status_key", "ai_status_idle")
+                    action_label = st.session_state.get("last_ai_status_action", "")
+                    if key == "ai_status_last_action" and action_label:
+                        st.session_state.last_ai_status = get_text(key).format(action=action_label)
+                    else:
+                        st.session_state.last_ai_status = get_text(key)
                 st.rerun()
         
         st.divider()
@@ -969,7 +1134,7 @@ def main():
         # Initialize sidebar expander state memory
         if "sidebar_expanded" not in st.session_state:
             st.session_state.sidebar_expanded = {
-                "ai_assistant": not simple_mode,
+                "ai_assistant": True,  # Preferred default open
                 "files_templates": False,
                 "add_components": not simple_mode,
                 "appearance": not simple_mode,
@@ -981,9 +1146,13 @@ def main():
         # 1. AI ASSISTANT (Most important - at the top)
         ai_expanded = st.session_state.sidebar_expanded.get("ai_assistant", not simple_mode)
         with st.expander(f"🤖 {get_text('ai_assistant')}", expanded=ai_expanded):
-            engine_options = ["None", "Ollama (Local)", "OpenRouter"]
+            prev_engine = st.session_state.get("last_engine", "None")
+            if "last_engine" not in st.session_state:
+                st.session_state.last_engine = prev_engine
+            other_engines = ["Gemini", "OpenAI", "OpenRouter"]
+            engine_options = ["None", "Ollama (Local)"] + sorted(other_engines)
             prev_ai_cfg = st.session_state.get("ai_cfg", {"engine": "None", "key": "", "url": "", "model": ""})
-            engine_default_idx = engine_options.index(prev_ai_cfg.get("engine", "None")) if prev_ai_cfg.get("engine", "None") in engine_options else 0
+            engine_default_idx = engine_options.index(prev_ai_cfg.get("engine", "None")) if prev_ai_cfg.get("engine", "None") in engine_options else engine_options.index("None")
 
             engine = st.selectbox(
                 get_text("ai_engine"), 
@@ -998,6 +1167,32 @@ def main():
                 "url": prev_ai_cfg.get("url", ""),
                 "model": prev_ai_cfg.get("model", "")
             }
+
+            # Reset defaults when switching engines
+            if engine != prev_engine:
+                defaults = {
+                    "None": {"url": "", "model": "", "key": ""},
+                    "Ollama (Local)": {"url": "http://localhost:11434/v1", "model": "llama3", "key": ""},
+                    "OpenAI": {"url": "https://api.openai.com/v1", "model": "gpt-4o-mini", "key": ""},
+                    "OpenRouter": {"url": "https://openrouter.ai/api/v1", "model": "openai/gpt-4o-mini", "key": ""},
+                    "Gemini": {"url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-1.5-pro-latest", "key": ""},
+                }
+                if engine in defaults:
+                    ai_cfg.update(defaults[engine])
+                st.session_state.last_engine = engine
+
+            # Auto connection check when creds change (lightweight)
+            last_check_payload = st.session_state.get("ai_last_check_payload")
+            current_payload = (engine, ai_cfg.get("url", ""), ai_cfg.get("key", ""))
+            if engine != "None" and current_payload != last_check_payload:
+                if engine == "Ollama (Local)" or ai_cfg.get("key"):
+                    alive, msg = check_connection(engine, ai_cfg.get("url", ""), ai_cfg.get("key", ""))
+                    st.session_state.ai_last_check_payload = current_payload
+                    st.session_state.ai_last_check_status = msg
+                    if alive:
+                        st.caption(f"✅ {msg}")
+                    else:
+                        st.caption(f"⚠️ {msg}")
             
             if engine != "None":
                 if engine == "OpenRouter":
@@ -1009,6 +1204,26 @@ def main():
                         if alive: 
                             st.success(msg)
                         else: 
+                            st.error(msg)
+                elif engine == "OpenAI":
+                    ai_cfg["key"] = st.text_input(get_text("api_key"), value=ai_cfg.get("key", ""), type="password", help="Your OpenAI API key", key="openai_api_key")
+                    ai_cfg["url"] = "https://api.openai.com/v1"
+                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "gpt-4o-mini") or "gpt-4o-mini", help="Model name (e.g., gpt-4o-mini)", key="openai_model")
+                    if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
+                        alive, msg = check_connection(engine, ai_cfg["url"], ai_cfg["key"])
+                        if alive:
+                            st.success(msg)
+                        else:
+                            st.error(msg)
+                elif engine == "Gemini":
+                    ai_cfg["key"] = st.text_input(get_text("api_key"), value=ai_cfg.get("key", ""), type="password", help="Your Gemini API key", key="gemini_api_key")
+                    ai_cfg["url"] = "https://generativelanguage.googleapis.com/v1beta/openai"
+                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "gemini-1.5-pro-latest") or "gemini-1.5-pro-latest", help="Model name (e.g., gemini-1.5-pro-latest)", key="gemini_model")
+                    if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
+                        alive, msg = check_connection(engine, ai_cfg["url"], ai_cfg["key"])
+                        if alive:
+                            st.success(msg)
+                        else:
                             st.error(msg)
                 elif engine == "Ollama (Local)":
                     ai_cfg["url"] = st.text_input("Ollama URL", ai_cfg.get("url", "http://localhost:11434/v1") or "http://localhost:11434/v1", help="Local Ollama server URL", key="ollama_url")
@@ -1183,6 +1398,24 @@ def main():
                     # Version History Settings
                     # Streamlit automatically updates session_state when checkbox value changes
                     st.checkbox(f"📜 {get_text('version_history')}", value=st.session_state.get("version_history_enabled", True), key="version_history_enabled")
+                
+                force_save_col1, force_save_col2 = st.columns([1, 1])
+                with force_save_col1:
+                    if st.button(get_text("force_save"), use_container_width=True, key="force_save_btn", help=get_text("force_save_help")):
+                        if save_name:
+                            if "content" in st.session_state:
+                                result = save_project(save_name, st.session_state.content)
+                                if result.startswith("✅"):
+                                    st.success(result)
+                                    clear_auto_save(save_name)
+                                else:
+                                    st.error(result)
+                            else:
+                                st.warning("No content to save")
+                        else:
+                            st.warning("Please enter a file name")
+                with force_save_col2:
+                    st.caption(get_text("force_save_help"))
             
             with template_tab:
                 # Template Selection Section
@@ -2118,6 +2351,37 @@ def main():
         
         st.subheader(f"✒️ {get_text('editor')}")
 
+        # First-run / empty-state helper: quick template CTA in an expander-like frame
+        editor_has_text = bool((st.session_state.get("editor_content") or "").strip())
+        template_labels = {
+            "⚡ Quick Update": ("Quick Update", "快速更新"),
+            "📢 Product Launch": ("Product Launch", "产品发布"),
+            "📰 Weekly Newsletter": ("Weekly Newsletter", "每周通讯"),
+            "📌 Simple Notice": ("Simple Notice", "简易通知"),
+        }
+        recommended_templates = list(template_labels.keys())
+        available_recommended = [t for t in recommended_templates if t in TEMPLATES]
+        if not editor_has_text and available_recommended:
+            lang = st.session_state.get("ui_language", "en")
+            header = "✨ Start fast: apply a quick template below." if lang != "zh" else "✨ 快速开始：一键套用推荐模板。"
+            with st.expander(header, expanded=True):
+                rec_cols = st.columns(2)
+                for idx, tpl in enumerate(available_recommended):
+                    label_en, label_zh = template_labels.get(tpl, (tpl, tpl))
+                    label = label_en if lang != "zh" else label_zh
+                    col = rec_cols[idx % 2]
+                    with col:
+                        if st.button(label, use_container_width=True, key=f"rec_tpl_{idx}"):
+                            tpl_content = TEMPLATES.get(tpl, "")
+                            st.session_state.content = tpl_content
+                            st.session_state.editor_content = tpl_content
+                            st.session_state.reset_editor = True
+                            st.session_state.last_preview_content_hash = None
+                            st.session_state.undo_stack = [tpl_content] if tpl_content else []
+                            st.session_state.redo_stack = []
+                            st.toast(f"Loaded template: {label}")
+                            st.rerun()
+
         # Inline markdown syntax help
         with st.expander(f"📖 {get_text('markdown_help')}", expanded=False):
             help_col1, help_col2 = st.columns(2)
@@ -2249,7 +2513,8 @@ Right column
         else:
             save_icon = f"✓ {get_text('saved')}"
         
-        # Display status bar
+        # Display status bar (sticky with CSS)
+        st.markdown('<div class="mp-editor-status">', unsafe_allow_html=True)
         status_col1, status_col2, status_col3 = st.columns([2, 2, 1])
         with status_col1:
             st.caption(f"📝 {word_count:,} {get_text('words')} · {char_count:,} {get_text('chars')}")
@@ -2257,6 +2522,7 @@ Right column
             st.caption(f"⏱️ ~{read_minutes} {get_text('min_read')}")
         with status_col3:
             st.caption(save_icon)
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Check for content changes (for auto-save and undo stack)
         if "editor_content" in st.session_state:
@@ -2365,11 +2631,17 @@ Right column
         # Quick action buttons (keyboard shortcuts via buttons)
         kb_col1, kb_col2, kb_col3 = st.columns(3)
         with kb_col1:
-            if st.button(f"💾 {get_text('quick_save')}", use_container_width=True, key="kb_save", help=get_text("save_current")):
+            if st.button(
+                f"💾 {get_text('quick_save')}",
+                use_container_width=True,
+                key="kb_save",
+                help=f"{get_text('save_current')} • Shortcut: ⌘/Ctrl+S"
+            ):
                 content_to_save = st.session_state.get("editor_content", current_content)
                 if st.session_state.current_project_name:
                     result = save_project(st.session_state.current_project_name, content_to_save)
                     if result.startswith("✅"):
+                        st.toast("💾 Saved", icon="✅")
                         st.success(result)
                     else:
                         if ErrorHandler:
@@ -2381,10 +2653,16 @@ Right column
                     if success:
                         st.session_state.last_auto_save_time = result
                         st.session_state.auto_save_status = "saved"
-                        st.toast("Auto-saved!")
+                        st.toast("💾 Auto-saved!", icon="✅")
         with kb_col2:
             undo_disabled = not (st.session_state.undo_stack and len(st.session_state.undo_stack) > 1)
-            if st.button(f"↶ {get_text('undo')}", use_container_width=True, key="kb_undo", disabled=undo_disabled, help=get_text("undo_help")):
+            if st.button(
+                f"↶ {get_text('undo')}",
+                use_container_width=True,
+                key="kb_undo",
+                disabled=undo_disabled,
+                help=f"{get_text('undo_help')} • Shortcut: ⌘/Ctrl+Z"
+            ):
                 if not undo_disabled:
                     content_for_undo = st.session_state.get("editor_content", current_content)
                     new_content = undo_action(
@@ -2397,7 +2675,13 @@ Right column
                     st.rerun()
         with kb_col3:
             redo_disabled = not st.session_state.redo_stack
-            if st.button(f"↷ {get_text('redo')}", use_container_width=True, key="kb_redo", disabled=redo_disabled, help=get_text("redo_help")):
+            if st.button(
+                f"↷ {get_text('redo')}",
+                use_container_width=True,
+                key="kb_redo",
+                disabled=redo_disabled,
+                help=f"{get_text('redo_help')} • Shortcut: ⌘/Ctrl+Shift+Z"
+            ):
                 if not redo_disabled:
                     content_for_redo = st.session_state.get("editor_content", current_content)
                     new_content = redo_action(
@@ -2422,6 +2706,7 @@ Right column
         # Get AI config and content type from session state
         ai_cfg = st.session_state.get("ai_cfg", {"engine": "None", "key": "", "url": "", "model": ""})
         ai_content_type = st.session_state.get("ai_content_type", None)
+        prev_engine = st.session_state.get("last_engine", "None")
         
         # Enhanced AI Actions
         if "ai_busy" not in st.session_state:
@@ -2430,6 +2715,25 @@ Right column
             st.session_state.pending_ai_action = None
         if "last_ai_action_ts" not in st.session_state:
             st.session_state.last_ai_action_ts = 0.0
+        if "last_ai_status" not in st.session_state:
+            st.session_state.last_ai_status = get_text("ai_status_idle")
+        if "last_ai_status_key" not in st.session_state:
+            st.session_state.last_ai_status_key = "ai_status_idle"
+        if "last_ai_status_action" not in st.session_state:
+            st.session_state.last_ai_status_action = ""
+        if "last_failed_ai_action" not in st.session_state:
+            st.session_state.last_failed_ai_action = None
+        if "last_titles_result" not in st.session_state:
+            st.session_state.last_titles_result = ""
+        MAX_AI_INPUT_CHARS = 8000
+
+        def set_ai_status(key: str, action_label: str = ""):
+            st.session_state.last_ai_status_key = key
+            st.session_state.last_ai_status_action = action_label
+            if key == "ai_status_last_action" and action_label:
+                st.session_state.last_ai_status = get_text(key).format(action=action_label)
+            else:
+                st.session_state.last_ai_status = get_text(key)
 
         pending_ai_action = st.session_state.get("pending_ai_action")
         if st.session_state.ai_busy and pending_ai_action:
@@ -2441,16 +2745,22 @@ Right column
                     st.session_state.pending_ai_action = None
                     st.session_state.ai_busy = False
                     st.session_state.last_ai_action_ts = time.time()
+                    set_ai_status("ai_status_failed")
                 else:
                     try:
                         with st.spinner(get_text("brainstorming_titles")):
                             titles, stat = run_ai(current_txt, "", ai_cfg, task_type="titles", content_type=ai_content_type)
                         st.info(titles)
+                        st.session_state.last_titles_result = titles
                         detected_lang = detect_language(current_txt) if current_txt else "English"
                         lang_text = get_text("detected_language").format(lang=detected_lang)
                         st.caption(f"🌐 {lang_text}")
+                        set_ai_status("ai_status_success")
+                        st.session_state.last_failed_ai_action = None
                     except Exception:
                         st.toast(get_text("ai_action_failed"))
+                        set_ai_status("ai_status_failed")
+                        st.session_state.last_failed_ai_action = {"name": "generate_titles", "require_text": True}
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
@@ -2461,6 +2771,7 @@ Right column
                     st.session_state.pending_ai_action = None
                     st.session_state.ai_busy = False
                     st.session_state.last_ai_action_ts = time.time()
+                    set_ai_status("ai_status_failed")
                 else:
                     try:
                         st.session_state.undo_stack = push_to_undo_stack(
@@ -2480,12 +2791,15 @@ Right column
                                 )
                             st.toast(f"✅ {msg} - Expanded content applied to editor!")
                             time.sleep(0.5)
+                        set_ai_status("ai_status_success")
+                        st.session_state.last_failed_ai_action = None
                     except Exception:
                         st.toast(get_text("ai_action_failed"))
+                        set_ai_status("ai_status_failed")
+                        st.session_state.last_failed_ai_action = {"name": "expand_content", "require_text": True}
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
-                        st.rerun()
 
             elif pending_ai_action == "smart_format":
                 if not current_txt:
@@ -2493,6 +2807,7 @@ Right column
                     st.session_state.pending_ai_action = None
                     st.session_state.ai_busy = False
                     st.session_state.last_ai_action_ts = time.time()
+                    set_ai_status("ai_status_failed")
                 else:
                     try:
                         st.session_state.undo_stack = push_to_undo_stack(
@@ -2521,12 +2836,15 @@ Right column
                                 )
                             st.toast(msg)
                             time.sleep(0.5)
+                        set_ai_status("ai_status_success")
+                        st.session_state.last_failed_ai_action = None
                     except Exception:
                         st.toast(get_text("ai_action_failed"))
+                        set_ai_status("ai_status_failed")
+                        st.session_state.last_failed_ai_action = {"name": "smart_format", "require_text": True}
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
-                        st.rerun()
 
             elif pending_ai_action == "suggest_components":
                 if not current_txt:
@@ -2534,6 +2852,7 @@ Right column
                     st.session_state.pending_ai_action = None
                     st.session_state.ai_busy = False
                     st.session_state.last_ai_action_ts = time.time()
+                    set_ai_status("ai_status_failed")
                 else:
                     try:
                         available_plugins = []
@@ -2580,8 +2899,12 @@ Right column
                             st.success(get_text("found_suggestions").format(count=len(suggestions_list)))
                         else:
                             st.info(get_text("no_suggestions"))
+                        set_ai_status("ai_status_success")
+                        st.session_state.last_failed_ai_action = None
                     except Exception:
                         st.toast(get_text("ai_action_failed"))
+                        set_ai_status("ai_status_failed")
+                        st.session_state.last_failed_ai_action = {"name": "suggest_components", "require_text": True}
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
@@ -2592,6 +2915,7 @@ Right column
                     st.session_state.pending_ai_action = None
                     st.session_state.ai_busy = False
                     st.session_state.last_ai_action_ts = time.time()
+                    set_ai_status("ai_status_failed")
                 else:
                     try:
                         st.session_state.undo_stack = push_to_undo_stack(
@@ -2611,15 +2935,30 @@ Right column
                                 )
                             st.toast(f"✅ {msg}")
                             time.sleep(0.5)
+                        set_ai_status("ai_status_success")
+                        st.session_state.last_failed_ai_action = None
                     except Exception:
                         st.toast(get_text("ai_action_failed"))
+                        set_ai_status("ai_status_failed")
+                        st.session_state.last_failed_ai_action = {"name": "polish_with_context", "require_text": True}
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
-                        st.rerun()
+            # After handling the pending AI action, re-render the page with fresh state
+            st.rerun()
 
         ai_busy = st.session_state.ai_busy
         st.subheader(f"🤖 {get_text('ai_actions')}")
+
+        def ai_preflight():
+            engine = ai_cfg.get("engine", "None")
+            key = ai_cfg.get("key", "")
+            if engine == "None":
+                # Rely on inline status; no extra alert
+                return False, None
+            if engine in {"OpenAI", "OpenRouter", "Gemini"} and not key:
+                return False, "Please add API key for selected engine."
+            return True, None
 
         def trigger_ai_action(action_name: str, require_text: bool = False):
             now = time.time()
@@ -2629,32 +2968,42 @@ Right column
             if now - st.session_state.get("last_ai_action_ts", 0) < 0.4:
                 st.toast(get_text("ai_action_debounced"))
                 return
-            if ai_cfg['engine'] == "None":
-                st.toast(get_text("please_set_ai_engine"))
+            ok, reason = ai_preflight()
+            if not ok:
+                if reason:
+                    st.toast(reason)
                 return
             if require_text and (not current_txt or not current_txt.strip()):
                 st.toast(get_text("ai_input_required"))
                 return
+            if current_txt and len(current_txt) > MAX_AI_INPUT_CHARS:
+                st.toast(get_text("ai_input_too_long"))
+                return
             st.session_state.pending_ai_action = action_name
             st.session_state.ai_busy = True
             st.session_state.last_ai_action_ts = now
+            set_ai_status("ai_status_last_action", action_label=action_name)
             st.rerun()
 
+        ai_ready, ai_reason = ai_preflight()
         ai_col1, ai_col2 = st.columns(2)
         
         with ai_col1:
-            if st.button(get_text("generate_titles"), use_container_width=True, disabled=ai_busy):
+            if st.button(get_text("generate_titles"), use_container_width=True, disabled=ai_busy or not ai_ready, help=get_text("help_generate_titles")):
                 trigger_ai_action("generate_titles", require_text=True)
             
-            if st.button(get_text("expand_content"), use_container_width=True, disabled=ai_busy):
+            if st.button(get_text("expand_content"), use_container_width=True, disabled=ai_busy or not ai_ready, help=get_text("help_expand_content")):
                 trigger_ai_action("expand_content", require_text=True)
         
         with ai_col2:
-            if st.button(get_text("smart_format"), use_container_width=True, disabled=ai_busy):
+            if st.button(get_text("smart_format"), use_container_width=True, disabled=ai_busy or not ai_ready, help=get_text("help_smart_format")):
                 trigger_ai_action("smart_format", require_text=True)
             
-            if st.button(get_text("suggest_components"), use_container_width=True, disabled=ai_busy):
+            if st.button(get_text("suggest_components"), use_container_width=True, disabled=ai_busy or not ai_ready, help=get_text("help_suggest_components")):
                 trigger_ai_action("suggest_components", require_text=True)
+
+            if not ai_ready and ai_reason:
+                st.caption(f"⚠️ {ai_reason}")
             
             # Display stored suggestions with insert buttons (persists across reruns)
             if "component_suggestions" in st.session_state and st.session_state.component_suggestions:
@@ -2720,10 +3069,47 @@ Right column
                     st.session_state.component_suggestions = []
                     st.rerun()
 
+        # AI status cue (compact, inline style)
+        engine_label = st.session_state.get("ai_cfg", {}).get("engine", "None")
+        status_text = st.session_state.get("last_ai_status", get_text("ai_status_idle"))
+        engine_set = engine_label and engine_label != "None"
+        lang = st.session_state.get("ui_language", "en")
+        if engine_set:
+            engine_display = engine_label
+            warning = ""
+        else:
+            if lang == "zh":
+                engine_display = "引擎未设置"
+                warning = " • ⚠️ 请先设置 AI 引擎"
+            else:
+                engine_display = "Engine: not set"
+                warning = " • ⚠️ Please set AI Engine in sidebar"
+        st.caption(f"🤖 {engine_display} • {status_text}{warning}")
+
         # AI Polish with Context button
-        st.divider()
-        if st.button(get_text("polish_with_context"), use_container_width=True, help=get_text("polish_with_context_help"), disabled=ai_busy):
+        disable_ai_actions = ai_busy or not engine_set
+        if st.button(get_text("polish_with_context"), use_container_width=True, help=get_text("help_polish_with_context"), disabled=disable_ai_actions):
             trigger_ai_action("polish_with_context", require_text=True)
+
+        # Retry affordance when last action failed
+        # Show last generated titles if available
+        if st.session_state.get("last_titles_result"):
+            st.info(st.session_state.last_titles_result)
+        if (not st.session_state.ai_busy) and st.session_state.get("last_failed_ai_action"):
+            failed_info = st.session_state.last_failed_ai_action
+            action_name = failed_info.get("name")
+            require_text_flag = failed_info.get("require_text", False)
+            if st.button(get_text("ai_retry"), use_container_width=True, disabled=ai_busy):
+                trigger_ai_action(action_name, require_text=require_text_flag)
+
+        # In-app quick help
+        with st.expander("❓ AI Help / 帮助", expanded=False):
+            st.markdown("- EN: Set AI engine in sidebar (OpenRouter/Ollama) before running actions.")
+            st.markdown("- EN: Editor must have text for Expand/Format/Suggest/Polish/Titles.")
+            st.markdown("- EN: Buttons disable while AI runs; retry appears if it fails.")
+            st.markdown("- 中文：在侧边栏先选择 AI 引擎（OpenRouter/Ollama）。")
+            st.markdown("- 中文：编辑器需有内容才能使用扩展/格式/建议/润色/生成标题。")
+            st.markdown("- 中文：运行中按钮会禁用，失败后可点击重试。")
 
     with col2:
         st.subheader(f"👁️ {view} Preview")
@@ -2734,105 +3120,126 @@ Right column
         # Initialize wechat_final to ensure it's always defined
         wechat_final = None
         
-        # Performance optimization: Debounced preview rendering
+        # Performance optimization: Debounced + cached preview rendering (content + theme + view)
         should_render_preview = True
         cached_preview = None
         
         if PerformanceOptimizer and st.session_state.get("performance_optimizer"):
             optimizer = st.session_state.performance_optimizer
             
-            # Check if we should update preview (debouncing)
-            # Include theme in hash so theme changes trigger re-render
-            theme_key = str(active_theme.get('bg', '')) + str(active_theme.get('primary', ''))
-            content_hash = hash(content_to_render + theme_key)
-            if content_hash == st.session_state.get("last_preview_content_hash"):
-                # Content AND theme haven't changed, use cached preview if available
-                cached_preview = optimizer.get_cached_preview(content_to_render + theme_key)
-                if cached_preview:
-                    should_render_preview = False
+            theme_key = f"{active_theme.get('bg', '')}|{active_theme.get('primary', '')}"
+            cache_key = f"{content_to_render}|{theme_key}|{view}"
+            cache_hash = hash(cache_key)
+            
+            cached_preview = optimizer.get_cached_preview(cache_key)
+            last_hash = st.session_state.get("last_preview_content_hash")
+            
+            if cache_hash == last_hash and cached_preview:
+                should_render_preview = False
             else:
-                # Content or theme changed - check debounce
-                if optimizer.should_update_preview(content_to_render):
-                    st.session_state.last_preview_content_hash = content_hash
+                if optimizer.should_update_preview(cache_key):
+                    st.session_state.last_preview_content_hash = cache_hash
                     should_render_preview = True
                 else:
-                    # Use cached preview while debouncing
-                    cached_preview = optimizer.get_cached_preview(content_to_render + theme_key)
                     if cached_preview:
                         should_render_preview = False
         
         # Render preview if there's content
+        # Large content guard (skip auto-render on very large input)
+        content_hash_raw = hash(content_to_render)
+        if st.session_state.get("last_preview_force_hash") != content_hash_raw:
+            st.session_state.preview_force_render = False
+            st.session_state.last_preview_force_hash = content_hash_raw
+        size_bytes = len(content_to_render.encode("utf-8")) if content_to_render else 0
+        is_large_preview = size_bytes > 120_000  # ~120KB
+
         has_content = content_to_render and content_to_render.strip()
         if has_content:
-            # Try to use cached preview first (if available and should_render_preview is False)
-            if not should_render_preview and cached_preview:
-                wechat_final = cached_preview
+            if is_large_preview and not st.session_state.get("preview_force_render", False):
+                size_kb = round(size_bytes / 1024)
+                st.info(f"Preview is large (~{size_kb} KB). Click to render on demand.", icon="⚠️")
+                if st.button("Render preview", use_container_width=True, key="render_large_preview"):
+                    st.session_state.preview_force_render = True
+                    st.rerun()
+                wechat_final = None
             else:
-                # Render fresh preview
-                try:
-                    inline_styles = get_inline_styles(active_theme)
-                    parsed_md = parse_doc(content_to_render, inline_styles, img_provider=img_provider, mode="wechat")
-            
-                    # Ensure parsed_md is not empty - if parse_doc returns empty, use original content
-                    if not parsed_md or not parsed_md.strip():
-                        parsed_md = content_to_render
-            
-                    # parsed_md contains HTML from plugins/components mixed with markdown
-                    # markdown.markdown() escapes HTML, so we need to preserve HTML blocks
-                    import re as re_module
-            
-                    # Strategy: Extract HTML blocks, process markdown, then merge back
-                    # Use HTML comments as placeholders (markdown preserves them)
-                    html_blocks = []
-            
-                    # Find all complete HTML elements
-                    def extract_html(match):
-                        html_block = match.group(0)
-                        # Use HTML comment as placeholder (markdown preserves comments)
-                        placeholder = f"<!--MPHTML{len(html_blocks)}-->"
-                        html_blocks.append(html_block)
-                        return placeholder
-            
-                    # Match complete HTML elements (section, div, span) with proper closing tags
-                    html_pattern = r'<(section|div|span)[^>]*>.*?</\1>'
-                    text_for_markdown = re_module.sub(html_pattern, extract_html, parsed_md, flags=re_module.DOTALL | re_module.IGNORECASE)
-            
-                    # Process markdown (HTML comments are preserved)
-                    raw_html = markdown.markdown(text_for_markdown, extensions=['nl2br', 'extra'])
-            
-                    # Restore HTML blocks - replace placeholders with actual HTML
-                    wechat_html_inner = raw_html
-                    for i, html_block in enumerate(html_blocks):
-                        placeholder = f"<!--MPHTML{i}-->"
-                        wechat_html_inner = wechat_html_inner.replace(placeholder, html_block)
-            
-                    wechat_html_inner = deep_inject_styles(wechat_html_inner, inline_styles)
-                    # Wrapper div: use theme background but NO padding (canvas already has padding: 20px)
-                    wrapper_bg = active_theme.get('bg', '#fff')
-                    wrapper_style = f"background-color: {wrapper_bg}; padding: 0; margin: 0; box-sizing: border-box;"
-                    wechat_final = f'<div style="{wrapper_style}">{wechat_html_inner}</div>'
-            
-                    # Cache the preview (include theme in cache key)
-                    if PerformanceOptimizer and st.session_state.get("performance_optimizer"):
-                        cache_key = content_to_render + str(active_theme.get('bg', '')) + str(active_theme.get('primary', ''))
-                        st.session_state.performance_optimizer.cache_preview(cache_key, wechat_final)
-                except Exception as e:
-                    # If rendering fails, try to show at least the raw markdown
+                st.session_state.preview_force_render = False
+            # Try to use cached preview first (if available and should_render_preview is False)
+            if st.session_state.get("preview_force_render", False) or not is_large_preview:
+                # Try to use cached preview first (if available and should_render_preview is False)
+                if not should_render_preview and cached_preview:
+                    wechat_final = cached_preview
+                else:
+                    # Render fresh preview
                     try:
-                        # Fallback: just render the markdown directly
-                        raw_html_fallback = markdown.markdown(content_to_render, extensions=['nl2br', 'extra'])
                         inline_styles = get_inline_styles(active_theme)
-                        # Don't add wrapper background - let the canvas handle it for proper theme matching
-                        # Wrapper div: use theme background but NO padding (canvas already has padding: 20px)
+                        parsed_md = parse_doc(content_to_render, inline_styles, img_provider=img_provider, mode="wechat")
+                
+                        # Ensure parsed_md is not empty - if parse_doc returns empty, use original content
+                        if not parsed_md or not parsed_md.strip():
+                            parsed_md = content_to_render
+                
+                        # parsed_md contains HTML from plugins/components mixed with markdown
+                        # markdown.markdown() escapes HTML, so we need to preserve HTML blocks
+                        import re as re_module
+                
+                        # Strategy: Extract HTML blocks, process markdown, then merge back
+                        # Use HTML comments as placeholders (markdown preserves them)
+                        html_blocks = []
+                
+                        # Find all complete HTML elements
+                        def extract_html(match):
+                            html_block = match.group(0)
+                            # Use HTML comment as placeholder (markdown preserves comments)
+                            placeholder = f"<!--MPHTML{len(html_blocks)}-->"
+                            html_blocks.append(html_block)
+                            return placeholder
+                
+                        # Match complete HTML elements (section, div, span) with proper closing tags
+                        html_pattern = r'<(section|div|span)[^>]*>.*?</\1>'
+                        text_for_markdown = re_module.sub(html_pattern, extract_html, parsed_md, flags=re_module.DOTALL | re_module.IGNORECASE)
+                
+                        # Process markdown (HTML comments are preserved)
+                        raw_html = markdown.markdown(text_for_markdown, extensions=['nl2br', 'extra'])
+                
+                        # Restore HTML blocks - replace placeholders with actual HTML
+                        wechat_html_inner = raw_html
+                        for i, html_block in enumerate(html_blocks):
+                            placeholder = f"<!--MPHTML{i}-->"
+                            wechat_html_inner = wechat_html_inner.replace(placeholder, html_block)
+                
+                        wechat_html_inner = deep_inject_styles(wechat_html_inner, inline_styles)
+                        # Wrapper div: add gentle padding for WeChat paste
                         wrapper_bg = active_theme.get('bg', '#fff')
-                        wrapper_style = f"background-color: {wrapper_bg}; padding: 0; margin: 0; box-sizing: border-box;"
-                        wechat_final = f'<div style="{wrapper_style}">{raw_html_fallback}</div>'
-                    except:
-                        # Last resort: show error message
-                        wechat_final = f'<div style="padding: 40px; text-align: center; color: #999;"><p>Preview error. Content: {len(content_to_render)} chars</p></div>'
+                        wrapper_style = f"background-color: {wrapper_bg}; padding: 16px; margin: 0; box-sizing: border-box;"
+                        # Center all images inside wechat markup
+                        wechat_html_inner = f'<style>.mp-wechat img{{display:block;margin:0 auto;}}</style><div class="mp-wechat">{wechat_html_inner}</div>'
+                        wechat_final = f'<div style="{wrapper_style}">{wechat_html_inner}</div>'
+                
+                        # Cache the preview (include theme + view in cache key)
+                        if PerformanceOptimizer and st.session_state.get("performance_optimizer"):
+                            theme_key = f"{active_theme.get('bg', '')}|{active_theme.get('primary', '')}"
+                            cache_key = f"{content_to_render}|{theme_key}|{view}"
+                            st.session_state.performance_optimizer.cache_preview(cache_key, wechat_final)
+                    except Exception as e:
+                        # If rendering fails, try to show at least the raw markdown
+                        try:
+                            # Fallback: just render the markdown directly
+                            raw_html_fallback = markdown.markdown(content_to_render, extensions=['nl2br', 'extra'])
+                            inline_styles = get_inline_styles(active_theme)
+                            # Don't add wrapper background - let the canvas handle it for proper theme matching
+                            # Wrapper div: add gentle padding for WeChat paste
+                            wrapper_bg = active_theme.get('bg', '#fff')
+                            wrapper_style = f"background-color: {wrapper_bg}; padding: 16px; margin: 0; box-sizing: border-box;"
+                            raw_html_fallback = f'<style>.mp-wechat img{{display:block;margin:0 auto;}}</style><div class="mp-wechat">{raw_html_fallback}</div>'
+                            wechat_final = f'<div style="{wrapper_style}">{raw_html_fallback}</div>'
+                        except:
+                            # Last resort: show error message
+                            wechat_final = f'<div style="padding: 40px; text-align: center; color: #999;"><p>Preview error. Content: {len(content_to_render)} chars</p></div>'
         else:
             # No content - show placeholder
             wechat_final = None
+            st.session_state.preview_force_render = False
         
         # Ensure parsed_md is always defined for standard HTML generation
         if 'parsed_md' not in locals():
@@ -2855,14 +3262,24 @@ Right column
         standard_html_content = markdown.markdown(parsed_md_for_std, extensions=['nl2br', 'extra'])
         for i, html_block in enumerate(html_blocks_std):
             standard_html_content = standard_html_content.replace(f"<!--MPHTML{i}-->", html_block)
-        standard_full = f"""<!DOCTYPE html><html><head><style>body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.7;color:{t['text']};background:{t['bg']};}} img{{max-width:100%;height:auto;}} a{{color:{t['primary']};}}</style></head><body>{standard_html_content}</body></html>"""
+        standard_full = f"""<!DOCTYPE html><html><head><style>body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.7;color:{t['text']};background:{t['bg']};}} img{{max-width:100%;height:auto;display:block;margin:0 auto;}} a{{color:{t['primary']};}}</style></head><body>{standard_html_content}</body></html>"""
         
         # Performance indicator (subtle, only when using cache)
         preview_status = ""
         if not should_render_preview and cached_preview:
-            preview_status = " ⚡ (cached)"
+            preview_status = "⚡ Cached"
+        else:
+            preview_status = "⬤ Updated"
+        st.session_state.last_render_ts = time.time()
         
         t1, t2, t3 = st.tabs([get_text("tab_visual"), get_text("tab_wechat_code"), get_text("tab_standard_html")])
+        if preview_status:
+            last_render_ts = st.session_state.get("last_render_ts")
+            if last_render_ts:
+                last_render_str = datetime.fromtimestamp(last_render_ts).strftime("%Y-%m-%d %H:%M:%S")
+                st.caption(f"{preview_status} • Rendered: {last_render_str}")
+            else:
+                st.caption(preview_status)
         with t1:
             import random
             k = random.randint(0,10000)
@@ -2963,11 +3380,11 @@ body, html {{
 .iphone-frame {{
     width: 390px;
     height: 780px;
-    margin: 10px auto;
+    margin: 4px auto;
     position: relative;
     background: linear-gradient(145deg, #2a2a2e 0%, #1a1a1e 50%, #0a0a0e 100%);
     border-radius: 58px;
-    padding: 12px;
+    padding: 10px;
     box-shadow: 
         0 50px 100px -20px rgba(0,0,0,0.5),
         0 30px 60px -30px rgba(0,0,0,0.6),
@@ -3273,6 +3690,14 @@ body, html {{
             st.components.v1.html(copy_component, height=60)
             st.code(clean_code, language="html")
         with t3:
+            size_bytes_export = len((st.session_state.get("content") or "").encode("utf-8")) if st.session_state.get("content") else 0
+            size_kb_export = round(size_bytes_export / 1024)
+            last_export_ts = st.session_state.get("last_export_ts")
+            if last_export_ts:
+                last_export_str = datetime.fromtimestamp(last_export_ts).strftime("%Y-%m-%d %H:%M:%S")
+                st.caption(f"Export size: ~{size_kb_export} KB. WeChat/HTML best under ~120KB. Last export: {last_export_str}")
+            else:
+                st.caption(f"Export size: ~{size_kb_export} KB. WeChat/HTML best under ~120KB.")
             col_pdf, col_word, col_html = st.columns(3)
             with col_pdf:
                 # PDF Export
@@ -3284,6 +3709,7 @@ body, html {{
                             pdf_bytes, status = generate_pdf(pdf_html, active_theme, markdown_source=parsed_md, img_provider=img_provider)
                             
                             if pdf_bytes:
+                                st.session_state.last_export_ts = time.time()
                                 st.download_button(
                                     get_text("download_pdf"),
                                     pdf_bytes,
@@ -3297,7 +3723,7 @@ body, html {{
                                 if ErrorHandler:
                                     ErrorHandler.show_error_with_details(status)
                                 else:
-                                    st.error(f"❌ {status}")
+                                    st.error(f"❌ PDF failed: {status} / 请重试")
                 else:
                     st.info("💡 PDF: `pip install reportlab`")
             
@@ -3309,6 +3735,7 @@ body, html {{
                             word_bytes, status = generate_word(parsed_md, active_theme)
                             
                             if word_bytes:
+                                st.session_state.last_export_ts = time.time()
                                 st.download_button(
                                     get_text("download_word"),
                                     word_bytes,
@@ -3318,7 +3745,7 @@ body, html {{
                                 )
                                 st.success("✅ Word document generated!")
                             else:
-                                st.error(f"❌ {status}")
+                                st.error(f"❌ Word failed: {status} / 请重试")
                 else:
                     st.info("💡 Word: `pip install python-docx`")
             
