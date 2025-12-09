@@ -57,6 +57,7 @@ TRANSLATIONS = {
         "comp_badge": "Badge",
         "comp_button": "Button",
         "comp_image": "AI Image",
+        "comp_video": "Video",
         "files": "Files",
         "templates": "Templates",
         "save": "Save",
@@ -246,6 +247,7 @@ TRANSLATIONS = {
         "comp_badge": "标签",
         "comp_button": "按钮",
         "comp_image": "AI 图片",
+        "comp_video": "视频",
         "files": "文件",
         "templates": "模板",
         "save": "保存",
@@ -828,9 +830,6 @@ def main():
         st.session_state.undo_stack = []
     if "redo_stack" not in st.session_state:
         st.session_state.redo_stack = []
-    if "simple_mode" not in st.session_state:
-        # Default to Simple Mode for a cleaner first-time experience
-        st.session_state.simple_mode = True
     if "current_project_name" not in st.session_state:
         st.session_state.current_project_name = None
     if "keyboard_action" not in st.session_state:
@@ -1640,6 +1639,7 @@ def main():
                 ],
                 get_text("media"): [
                     (get_text("comp_image"), "[IMG: describe your image]"),
+                    (get_text("comp_video"), '::: video src="https://example.com/video.mp4" poster="" caption="" autoplay=false muted=false loop=false :::'),
                 ],
             }
             
@@ -1649,7 +1649,7 @@ def main():
                 content_text = get_text("content")
             
                 for group_name, components in component_groups.items():
-                    if not simple_mode or group_name in [layout_text, content_text]:
+                    if not simple_mode or group_name in [layout_text, content_text, get_text("media")]:
                         st.markdown(f"**{group_name}**")
                         
                         # Display in grid (3 columns)
@@ -1668,7 +1668,7 @@ def main():
                         st.markdown("")  # Spacing between groups
                 
                 # Add plugin components section
-                if get_plugin_registry:
+                if get_plugin_registry and not simple_mode:
                     try:
                         registry = get_plugin_registry()
                         plugins = registry.get_plugins_by_category()
@@ -2439,7 +2439,13 @@ Right column
 
 [badge: NEW]
 [Button Label](https://link.com)
-[IMG: describe your image]""", language="markdown")
+[IMG: describe your image]
+
+# Responsive video (raw HTML)
+<video src="https://example.com/video.mp4" controls style="width:100%;height:auto;display:block;"></video>
+
+# Video component (responsive)
+::: video src="https://example.com/video.mp4" poster="" caption="" autoplay=false muted=false loop=false :::""", language="markdown")
             
             st.caption(f"💡 {get_text('syntax_tip')}")
         
@@ -3195,8 +3201,8 @@ Right column
                             html_blocks.append(html_block)
                             return placeholder
                 
-                        # Match complete HTML elements (section, div, span) with proper closing tags
-                        html_pattern = r'<(section|div|span)[^>]*>.*?</\1>'
+                        # Match complete HTML elements (section, div, span, video) with proper closing tags
+                        html_pattern = r'<(section|div|span|video)[^>]*>.*?</\1>'
                         text_for_markdown = re_module.sub(html_pattern, extract_html, parsed_md, flags=re_module.DOTALL | re_module.IGNORECASE)
                 
                         # Process markdown (HTML comments are preserved)
@@ -3258,11 +3264,27 @@ Right column
             placeholder = f"<!--MPHTML{len(html_blocks_std)}-->"
             html_blocks_std.append(html_block)
             return placeholder
-        parsed_md_for_std = re_module_std.sub(r'<(section|div|span)[^>]*>.*?</\1>', extract_html_std, parsed_md, flags=re_module_std.DOTALL | re_module_std.IGNORECASE)
+        parsed_md_for_std = re_module_std.sub(r'<(section|div|span|video)[^>]*>.*?</\1>', extract_html_std, parsed_md, flags=re_module_std.DOTALL | re_module_std.IGNORECASE)
         standard_html_content = markdown.markdown(parsed_md_for_std, extensions=['nl2br', 'extra'])
         for i, html_block in enumerate(html_blocks_std):
             standard_html_content = standard_html_content.replace(f"<!--MPHTML{i}-->", html_block)
-        standard_full = f"""<!DOCTYPE html><html><head><style>body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.7;color:{t['text']};background:{t['bg']};}} img{{max-width:100%;height:auto;display:block;margin:0 auto;}} a{{color:{t['primary']};}}</style></head><body>{standard_html_content}</body></html>"""
+        component_css = f"""
+        body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.7;color:{t['text']};background:{t['bg']};}}
+        img{{max-width:100%;height:auto;display:block;margin:0 auto;}}
+        a{{color:{t['primary']};}}
+        .mp-video{{position:relative;width:100%;max-width:900px;margin:12px auto;}}
+        .mp-video video{{width:100%;height:auto;display:block;}}
+        .mp-grid{{display:flex;gap:10px;flex-wrap:wrap;}}
+        .mp-col{{flex:1 1 0;min-width:200px;}}
+        .mp-btn-container a{{display:inline-block;padding:10px 16px;border-radius:8px;background:{t['primary']};color:#fff;text-decoration:none;}}
+        .mp-card{{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin:12px 0;box-shadow:{t.get('shadow', '0 4px 12px rgba(0,0,0,0.08)')};}}
+        .mp-card h3{{margin-top:0;}}
+        .mp-step{{display:flex;gap:10px;margin:10px 0;align-items:center;}}
+        .mp-step-num{{width:28px;height:28px;border-radius:50%;background:{t['primary']};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;}}
+        .mp-timeline-item{{position:relative;padding-left:18px;margin:8px 0;}}
+        .mp-timeline-dot{{position:absolute;left:0;top:8px;width:10px;height:10px;border-radius:50%;background:{t['primary']};}}
+        """
+        standard_full = f"""<!DOCTYPE html><html><head><style>{component_css}</style></head><body>{standard_html_content}</body></html>"""
         
         # Performance indicator (subtle, only when using cache)
         preview_status = ""
