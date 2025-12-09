@@ -103,6 +103,8 @@ MarkPolish Studio supports custom markdown components:
 - `::: card` - Styled card components
 - `[IMG: description]` - AI-generated images
 - `[LOCAL: filename]` - Local images
+- `<video src="https://example.com/video.mp4" controls style="width:100%;height:auto;display:block;"></video>` - Responsive raw video embed (HTML)
+- `::: video src="https://example.com/video.mp4" poster="" caption="" autoplay=false muted=false loop=false :::` - Video component (HTML player; WeChat may ignore inline playback)
 
 ### Themes
 

@@ -3,6 +3,7 @@ import urllib.parse
 import streamlit as st
 import random
 import os
+import shlex
 
 # Import image handling functions for library fallback
 try:
@@ -25,6 +26,7 @@ COMPONENT_COMPATIBILITY = {
     "card": {"wechat": True, "html": True},
     "img": {"wechat": True, "html": True},
     "table": {"wechat": True, "html": True},
+    "video": {"wechat": True, "html": True},
 }
 
 # --- 1. TOOLBAR CONFIGURATION ---
@@ -125,6 +127,48 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
     
     # Case Insensitive regex for [IMG: ...]
     text = re.sub(r'\[IMG:\s*(.*?)\]', web_img_repl, text, flags=re.IGNORECASE)
+
+    # 2.5 Video Component
+    # Syntax: ::: video src="https://..." poster="" caption="" autoplay=false muted=false loop=false :::
+    def video_r(m):
+        attrs_raw = m.group(1).strip()
+        attrs = {}
+        for token in shlex.split(attrs_raw):
+            if "=" in token:
+                k, v = token.split("=", 1)
+                attrs[k.strip()] = v.strip().strip('"')
+        src = attrs.get("src", "").strip()
+        poster = attrs.get("poster", "").strip()
+        caption = attrs.get("caption", "").strip()
+        def as_bool(val: str):
+            return str(val).lower() in {"1", "true", "yes", "on"}
+        autoplay = as_bool(attrs.get("autoplay", "false"))
+        muted = as_bool(attrs.get("muted", "false"))
+        loop = as_bool(attrs.get("loop", "false"))
+
+        if not src:
+            return "\\n> ⚠️ Video source missing\\n"
+
+        video_attrs = ['controls', 'preload="metadata"']
+        if poster:
+            video_attrs.append(f'poster="{poster}"')
+        if autoplay:
+            video_attrs.append("autoplay")
+        if muted:
+            video_attrs.append("muted")
+        if loop:
+            video_attrs.append("loop")
+
+        wrapper_style = "position:relative;width:100%;max-width:900px;margin:12px auto;"
+        video_style = "width:100%;height:auto;display:block;"
+        cap_html = f'<div style="font-size:13px;color:#666;margin-top:6px;text-align:center;">{caption}</div>' if caption else ""
+
+        return (f'<div class="mp-video" style="{wrapper_style}">'
+                f'<video src="{src}" style="{video_style}" {" ".join(video_attrs)}></video>'
+                f'{cap_html}'
+                f'</div>')
+
+    text = re.sub(r'(?is):::\s*video\s*(.*?)\s*:::', video_r, text)
     
     # --- B. LAYOUT COMPONENTS ---
 
