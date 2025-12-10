@@ -899,18 +899,6 @@ def main():
         }
     }
 
-    /* Sticky editor status bar */
-    .mp-editor-status {
-        position: sticky;
-        bottom: 0;
-        padding: 0.35rem 0;
-        background: rgba(255,255,255,0.85);
-        backdrop-filter: blur(6px);
-        z-index: 5;
-    }
-    [data-theme="dark"] .mp-editor-status {
-        background: rgba(17,17,17,0.85);
-    }
     </style>
     """
     st.markdown(tight_layout_css, unsafe_allow_html=True)
@@ -2519,8 +2507,7 @@ Right column
         else:
             save_icon = f"✓ {get_text('saved')}"
         
-        # Display status bar (sticky with CSS)
-        st.markdown('<div class="mp-editor-status">', unsafe_allow_html=True)
+        # Editor status (no wrapper div)
         status_col1, status_col2, status_col3 = st.columns([2, 2, 1])
         with status_col1:
             st.caption(f"📝 {word_count:,} {get_text('words')} · {char_count:,} {get_text('chars')}")
@@ -2528,7 +2515,6 @@ Right column
             st.caption(f"⏱️ ~{read_minutes} {get_text('min_read')}")
         with status_col3:
             st.caption(save_icon)
-        st.markdown('</div>', unsafe_allow_html=True)
         
         # Check for content changes (for auto-save and undo stack)
         if "editor_content" in st.session_state:
@@ -3393,20 +3379,25 @@ Right column
 body, html {{ 
     margin: 0; 
     padding: 0; 
-    background: #f0f0f0;
+    background: transparent;
     font-family: {font_family};
+    overflow: visible;
+    min-height: 100%;
 }}
 ::-webkit-scrollbar {{ display: none; }}
 
 /* iPhone 17 Pro Frame */
 .iphone-frame {{
-    width: 390px;
-    height: 780px;
+    width: 100%;
+    max-width: 390px;
+    aspect-ratio: 390 / 780;
+    height: auto;
     margin: 4px auto;
     position: relative;
     background: linear-gradient(145deg, #2a2a2e 0%, #1a1a1e 50%, #0a0a0e 100%);
     border-radius: 58px;
     padding: 10px;
+    box-sizing: border-box;
     box-shadow: 
         0 50px 100px -20px rgba(0,0,0,0.5),
         0 30px 60px -30px rgba(0,0,0,0.6),
@@ -3643,7 +3634,9 @@ body, html {{
 </body>
 </html>
 <!-- {{k}} -->"""
-            st.components.v1.html(preview_html, height=850, scrolling=True)
+            # Calculate height for mobile (frame + padding) or use fixed for desktop
+            preview_height = 850 if not is_mobile else 820
+            st.components.v1.html(preview_html, height=preview_height, scrolling=True)
         with t2:
             clean_code = clean_for_wechat(wechat_final)
             

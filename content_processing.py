@@ -68,10 +68,10 @@ def get_preview_css(theme, mode="Mobile"):
     content_padding_top = "30px" if is_mobile else "0"
     
     if is_mobile:
-        frame_css = f"""
+        frame_css = """
+            width: 100% !important;
             max-width: 375px !important;
-            width: 375px !important;
-            min-width: 375px !important;
+            min-width: 0 !important;
             height: 750px !important;
             border: 16px solid #1a1a1a !important;
             border-radius: 50px !important;
@@ -102,8 +102,8 @@ def get_preview_css(theme, mode="Mobile"):
     .preview-frame {{ 
         {frame_css} 
         margin: 0 auto !important; 
-        background: {bg_color} !important; 
-        box-shadow: 0 25px 60px -12px rgba(0,0,0,0.55), 0 0 0 2px rgba(0,0,0,0.15) !important; 
+        background: transparent !important; 
+        box-shadow: none !important; 
         position: relative !important;
         display: block !important;
     }}
