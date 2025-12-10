@@ -7,7 +7,6 @@ A powerful Streamlit-based content creation and editing tool for creating beauti
 - 📝 **Rich Markdown Editor** - Create content with markdown syntax and custom components
 - 🎨 **Theme Support** - Multiple beautiful themes for different content styles
 - 📄 **PDF Export** - Export your content as PDF with professional styling
-- 🔗 **Share Links** - Create shareable links for your projects
 - 🤖 **AI Integration** - AI-powered content polishing, formatting, and suggestions
 - 🖼️ **Image Library** - Manage and reuse images across projects
 - 📚 **Template Library** - Pre-built templates for common content types
@@ -48,7 +47,6 @@ MarkPolish Studio/
 ├── file_operations.py     # File save/load, version history, auto-save
 ├── pdf_generator.py       # PDF generation functionality
 ├── image_handling.py      # Image processing and library management
-├── share_system.py        # Share link creation and management
 ├── ai_integration.py      # AI/OpenAI integration
 ├── content_processing.py  # Content parsing, markdown processing, preview
 ├── ui_helpers.py         # UI utility functions
@@ -204,7 +202,6 @@ The codebase is organized into modules:
 - **file_operations.py**: File management
 - **pdf_generator.py**: PDF generation
 - **image_handling.py**: Image operations
-- **share_system.py**: Share functionality
 - **ai_integration.py**: AI features
 - **content_processing.py**: Content processing
 - **app.py**: Main UI and orchestration
@@ -219,7 +216,27 @@ The codebase is organized into modules:
 
 ## License
 
-[Add your license information here]
+MIT License
+
+Copyright (c) 2024 MarkPolish Studio contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ## Support
 

@@ -461,6 +461,14 @@ try:
 except ImportError:
     HAS_KEYBOARD_LISTENER = False
 
+try:
+    from cursor_tracker import create_cursor_tracker, get_cursor_position
+    HAS_CURSOR_TRACKER = True
+except ImportError:
+    HAS_CURSOR_TRACKER = False
+    def get_cursor_position():
+        return None, None, None
+
 # Import AI
 try:
     from openai import OpenAI
@@ -500,20 +508,6 @@ except ImportError:
     def get_image_library(): return []
     def load_image_from_library(filename): return None
     def delete_image_from_library(filename): return False
-
-try:
-    from share_system import (
-        generate_share_id, create_share_link, get_share_metadata, load_shared_project,
-        get_share_link_url, list_project_shares, delete_share
-    )
-except ImportError:
-    def generate_share_id(project_name): return None
-    def create_share_link(project_name, permission="read", expires_days=30): return None, "Module not available"
-    def get_share_metadata(share_id): return None
-    def load_shared_project(share_id): return None, None
-    def get_share_link_url(share_id): return ""
-    def list_project_shares(project_name): return []
-    def delete_share(share_id): return False
 
 try:
     from ai_integration import check_connection, run_ai, detect_language
@@ -743,11 +737,10 @@ if 'TEMPLATES' not in globals() or not TEMPLATES:
 
 # --- MAIN UI ---
 # All helper functions have been moved to separate modules
-# See: file_operations.py, image_handling.py, share_system.py, 
+# See: file_operations.py, image_handling.py,
 #      ai_integration.py, content_processing.py, pdf_generator.py
 
 def main():
-    # Check for share link in query parameters
     query_params = st.query_params
     
     # Helper: enforce only one sidebar expander open (or all closed)
@@ -795,29 +788,18 @@ def main():
                 st.session_state.last_expander_state_hash = current_hash
             except Exception as e:
                 pass  # Silently fail if JSON parsing fails
-    if "share" in query_params:
-        share_id = query_params["share"]
-        shared_content, permission = load_shared_project(share_id)
-        if shared_content is not None:
-            st.session_state.content = shared_content
-            st.session_state.editor_content = shared_content
-            st.session_state.is_shared = True
-            st.session_state.share_permission = permission
-            st.session_state.share_id = share_id
-            st.session_state.reset_editor = True
-            # Reset preview cache to force re-render
-            st.session_state.last_preview_content_hash = None
-            if PerformanceOptimizer and st.session_state.get("performance_optimizer"):
-                optimizer = st.session_state.performance_optimizer
-                optimizer.preview_cache = {}
-                optimizer.last_preview_hash = None
-                optimizer.last_preview_time = 0
-            # Clear query param after loading
-            st.query_params.clear()
-            st.rerun()
-        else:
-            st.error("⚠️ Share link is invalid or expired")
-            st.query_params.clear()
+    # Read cursor position from query params (set by cursor tracker)
+    # This makes cursor position available for component insertion
+    if "_cursor_start" in query_params:
+        try:
+            st.session_state._cursor_start = int(query_params["_cursor_start"])
+        except:
+            pass
+    if "_cursor_end" in query_params:
+        try:
+            st.session_state._cursor_end = int(query_params["_cursor_end"])
+        except:
+            pass
     
     # Initialize session state variables
     if "auto_save_enabled" not in st.session_state:
@@ -842,10 +824,6 @@ def main():
         st.session_state.preview_update_pending = False
     if "last_preview_content_hash" not in st.session_state:
         st.session_state.last_preview_content_hash = None
-    if "is_shared" not in st.session_state:
-        st.session_state.is_shared = False
-    if "share_permission" not in st.session_state:
-        st.session_state.share_permission = "read"
     
     # Cleanup old auto-save files on startup
     cleanup_old_autosave_files()
@@ -1556,51 +1534,6 @@ def main():
             
             # Migration Tool removed - users keep ## for headings, use ::: card for cards
             
-            # Share link section
-            if st.session_state.current_project_name:
-                st.divider()
-                st.subheader("🔗 Share Link")
-                project_name = st.session_state.current_project_name
-                
-                # List existing shares
-                existing_shares = list_project_shares(project_name)
-                if existing_shares:
-                    st.caption(f"{len(existing_shares)} active share link(s)")
-                    for share in existing_shares[:3]:  # Show max 3
-                        share_id = share.get("share_id")
-                        permission = share.get("permission", "read")
-                        expires_at = share.get("expires_at", 0)
-                        expires_date = datetime.fromtimestamp(expires_at).strftime("%Y-%m-%d")
-                        
-                        col_share, col_del = st.columns([4, 1])
-                        with col_share:
-                            share_query = f"?share={share_id}"
-                            st.code(share_query, language=None)
-                            st.caption(f"{permission.upper()} • Expires: {expires_date}")
-                        with col_del:
-                            if st.button("🗑️", key=f"del_{share_id}", help="Delete share"):
-                                if delete_share(share_id):
-                                    st.success("Deleted")
-                                    st.rerun()
-                
-                # Create new share link
-                share_col1, share_col2 = st.columns(2)
-                with share_col1:
-                    share_permission = st.selectbox("Permission", ["read", "edit"], key="share_perm")
-                with share_col2:
-                    share_expires = st.selectbox("Expires", [7, 30, 90, 365], format_func=lambda x: f"{x} days", index=1, key="share_exp")
-                
-                if st.button("🔗 Create Share Link", use_container_width=True):
-                    share_id, metadata = create_share_link(project_name, share_permission, share_expires)
-                    if share_id:
-                        st.success("✅ Share link created!")
-                        share_query = f"?share={share_id}"
-                        st.code(share_query, language=None)
-                        st.info(f"Add `{share_query}` to your URL to share")
-                        st.rerun()
-                    else:
-                        st.error("Failed to create share link")
-
         # 2. COMPONENTS (All component buttons in one expander)
         st.divider()
         components_expanded = st.session_state.sidebar_expanded.get("add_components", not simple_mode)
@@ -1631,6 +1564,16 @@ def main():
                 ],
             }
             
+            # Helper function to insert component at cursor position
+            # Defined outside try block so both component and plugin sections can access it
+            def insert_component_at_cursor(syntax):
+                """Insert component syntax - JavaScript will handle insertion at cursor"""
+                # Store syntax for JS to insert - DON'T update Python state yet
+                # JavaScript will insert and then we'll read it back
+                st.session_state.pending_component_insert = syntax
+                # Trigger rerun to inject JavaScript for insertion
+                st.rerun()
+            
             try:
                 # Show grouped built-in components (now with translated names)
                 layout_text = get_text("layout")
@@ -1650,8 +1593,7 @@ def main():
                                     def add_component(syntax=comp_syntax):
                                         if "content" not in st.session_state: 
                                             st.session_state.content = ""
-                                        st.session_state.content += f"\n\n{syntax}\n"
-                                        st.session_state.reset_editor = True
+                                        insert_component_at_cursor(syntax)
                                     col.button(comp_name, on_click=add_component, use_container_width=True, help=comp_name)
                         st.markdown("")  # Spacing between groups
                 
@@ -1679,8 +1621,8 @@ def main():
                                             def add_plugin_component(plugin_syntax=plugin.insertion_tool):
                                                 if "content" not in st.session_state: 
                                                     st.session_state.content = ""
-                                                st.session_state.content += f"\n\n{plugin_syntax}\n"
-                                                st.session_state.reset_editor = True
+                                                # Use the same insertion logic as regular components
+                                                insert_component_at_cursor(plugin_syntax)
                                         
                                             plugin_description = get_plugin_description(plugin.name, plugin.description)
                                             col.button(
@@ -2463,23 +2405,70 @@ Right column
         if "editor_content" not in st.session_state:
             st.session_state.editor_content = current_content
         
-        # Show share mode indicator
-        if st.session_state.get("is_shared", False):
-            permission = st.session_state.get("share_permission", "read")
-            if permission == "read":
-                st.info("👁️ **Read-only mode** - This is a shared link. You can view but not edit.")
-            else:
-                st.info("✏️ **Edit mode** - This is a shared link. You can view and edit.")
-
         # Apply any pending snippet insert before rendering the textarea
         if st.session_state.get("pending_insert"):
             base_text = st.session_state.get("editor_content") or st.session_state.get("content", "")
             st.session_state.editor_content = base_text + st.session_state.pending_insert
             st.session_state.pending_insert = None
+        
+        # Apply component insertion before rendering the textarea (BEFORE widget creation!)
+        if st.session_state.get("pending_component_insert"):
+            import json
+            snippet = st.session_state.pending_component_insert
+            
+            # Get current editor content
+            current_content = st.session_state.get("editor_content", "")
+            
+            # Try to get cursor position from session state or query params
+            cursor_start = st.session_state.get("_cursor_start")
+            cursor_end = st.session_state.get("_cursor_end")
+            
+            # Fallback: try to get from query params
+            if cursor_start is None or cursor_end is None:
+                query_params = st.query_params
+                if cursor_start is None:
+                    cursor_start = query_params.get("_cursor_start", None)
+                    if cursor_start is not None:
+                        try:
+                            cursor_start = int(cursor_start)
+                        except:
+                            cursor_start = None
+                if cursor_end is None:
+                    cursor_end = query_params.get("_cursor_end", None)
+                    if cursor_end is not None:
+                        try:
+                            cursor_end = int(cursor_end)
+                        except:
+                            cursor_end = None
+            
+            # Default to end of content if no cursor position
+            if cursor_start is None:
+                cursor_start = len(current_content)
+            if cursor_end is None:
+                cursor_end = len(current_content)
+            
+            # Insert component at cursor position
+            pos = max(cursor_start, cursor_end)
+            new_content = current_content[:pos] + "\n\n" + snippet + "\n" + current_content[pos:]
+            
+            # Update session state BEFORE widget creation (this is the key!)
+            # Delete first to avoid "cannot modify after widget instantiated" error
+            if "editor_content" in st.session_state:
+                del st.session_state.editor_content
+            st.session_state.editor_content = new_content
+            st.session_state.content = new_content
+            
+            # Update cursor position after insertion
+            new_pos = pos + len("\n\n" + snippet + "\n")
+            st.session_state._cursor_start = new_pos
+            st.session_state._cursor_end = new_pos
+            st.session_state.js_insertion_completed = True
+            
+            # Clear the flag
+            st.session_state.pending_component_insert = None
 
         # Text area outside form to allow content change detection
-        # Disable if shared and read-only
-        is_readonly = st.session_state.get("is_shared", False) and st.session_state.get("share_permission", "read") == "read"
+        is_readonly = False
         txt = st.text_area(
             "MD", 
             st.session_state.editor_content, 
@@ -2488,6 +2477,132 @@ Right column
             key="editor_content",
             disabled=is_readonly
         )
+        
+        # CRITICAL: After textarea renders, check if user changed it
+        # If txt differs from session_state, update session_state (this handles JS insertions)
+        if txt != st.session_state.get("editor_content"):
+            st.session_state.editor_content = txt
+            st.session_state.content = txt
+            if st.session_state.get("js_insertion_completed"):
+                st.session_state.js_insertion_completed = False
+        
+        # Simple cursor tracker - stores position in data attributes
+        import streamlit.components.v1 as components
+        cursor_tracker_js = """
+        <script>
+        (function() {
+            const mainWindow = window.parent !== window ? window.parent : window;
+            const mainDoc = mainWindow.document;
+            
+            function findEditorTextarea() {
+                const textareas = mainDoc.querySelectorAll('textarea');
+                for (const ta of textareas) {
+                    const h = parseInt(getComputedStyle(ta).height);
+                    if (h > 400) return ta;
+                }
+                let maxH = 0, candidate = null;
+                for (const ta of textareas) {
+                    const h = parseInt(getComputedStyle(ta).height);
+                    if (h > maxH) { maxH = h; candidate = ta; }
+                }
+                return maxH > 200 ? candidate : null;
+            }
+            
+            function updateCursor() {
+                const textarea = findEditorTextarea();
+                if (!textarea) return;
+                const start = textarea.selectionStart || 0;
+                const end = textarea.selectionEnd || 0;
+                textarea.setAttribute('data-cursor-start', start);
+                textarea.setAttribute('data-cursor-end', end);
+                // Persist cursor position to URL so Python can read it on rerun
+                try {
+                    const url = new URL(mainWindow.location.href);
+                    url.searchParams.set('_cursor_start', start);
+                    url.searchParams.set('_cursor_end', end);
+                    mainWindow.history.replaceState({}, '', url.toString());
+                } catch (e) {
+                    console.warn('Could not update cursor params:', e);
+                }
+            }
+            
+            function attachTracker() {
+                const textarea = findEditorTextarea();
+                if (!textarea) {
+                    setTimeout(attachTracker, 200);
+                    return;
+                }
+                ['click', 'keyup', 'mouseup', 'focus', 'input'].forEach(ev => {
+                    textarea.addEventListener(ev, updateCursor, true);
+                });
+                textarea.addEventListener('blur', function() {
+                    updateCursor();
+                }, true);
+                updateCursor();
+            }
+            setTimeout(attachTracker, 300);
+        })();
+        </script>
+        """
+        components.html(cursor_tracker_js, height=0)
+        
+        # Position cursor after component insertion (if insertion happened)
+        if st.session_state.get("js_insertion_completed"):
+            import json
+            new_pos = st.session_state.get("_cursor_start", 0)
+            
+            # Inject JavaScript to position cursor in the textarea (UI update only)
+            cursor_js = f"""
+            <script>
+            (function() {{
+                try {{
+                    const mainWindow = window.parent !== window ? window.parent : window;
+                    const mainDoc = mainWindow.document;
+                    
+                    function findEditorTextarea() {{
+                        const textareas = mainDoc.querySelectorAll('textarea');
+                        for (const ta of textareas) {{
+                            const h = parseInt(getComputedStyle(ta).height);
+                            if (h > 400) return ta;
+                        }}
+                        let maxH = 0, candidate = null;
+                        for (const ta of textareas) {{
+                            const h = parseInt(getComputedStyle(ta).height);
+                            if (h > maxH) {{ maxH = h; candidate = ta; }}
+                        }}
+                        return maxH > 200 ? candidate : null;
+                    }}
+                    
+                    function positionCursor() {{
+                        const textarea = findEditorTextarea();
+                        if (!textarea) {{
+                            setTimeout(positionCursor, 50);
+                            return;
+                        }}
+                        
+                        const newPos = {new_pos};
+                        
+                        // Position cursor
+                        try {{
+                            textarea.setSelectionRange(newPos, newPos);
+                            textarea.focus();
+                            textarea.setAttribute('data-cursor-start', newPos);
+                            textarea.setAttribute('data-cursor-end', newPos);
+                            console.log('✅ Cursor positioned at', newPos);
+                        }} catch(e) {{
+                            console.warn('Could not position cursor:', e);
+                        }}
+                    }}
+                    
+                    setTimeout(positionCursor, 150);
+                }} catch(e) {{
+                    console.warn('Cursor positioning error:', e);
+                }}
+            }})();
+            </script>
+            """
+            components.html(cursor_js, height=0)
+            st.session_state.js_insertion_completed = False
         
         # --- Editor Status Bar ---
         editor_text = st.session_state.get("editor_content", "")

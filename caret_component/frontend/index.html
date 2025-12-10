@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Caret Tracker Component</title>
+    <script src="https://unpkg.com/streamlit-component-lib@1.1.0/dist/index.js"></script>
+    <style>
+      body { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <script>
+      (function() {
+        // Streamlit is provided by streamlit-component-lib above
+        const Streamlit = window.Streamlit;
+        if (!Streamlit) {
+          console.error("Streamlit component lib not found");
+          return;
+        }
+
+        let lastSent = { start: null, end: null };
+
+        function findEditorTextarea() {
+          const doc = window.parent?.document || document;
+          const textareas = doc.querySelectorAll("textarea");
+          let candidate = null;
+          let maxH = 0;
+          for (const ta of textareas) {
+            const h = parseInt(window.getComputedStyle(ta).height || "0", 10);
+            if (h > 400) return ta;
+            if (h > maxH) {
+              maxH = h;
+              candidate = ta;
+            }
+          }
+          return maxH > 200 ? candidate : null;
+        }
+
+        function sendCursor(force = false) {
+          const textarea = findEditorTextarea();
+          if (!textarea) {
+            Streamlit.setComponentValue(null);
+            return;
+          }
+          let start = textarea.selectionStart || 0;
+          let end = textarea.selectionEnd || 0;
+          const ts = Date.now();
+          // If unfocused and 0,0, try stored data attributes
+          if (doc.activeElement !== textarea && start === 0 && end === 0 && textarea.value.length > 0) {
+            const sAttr = textarea.getAttribute("data-cursor-start");
+            const eAttr = textarea.getAttribute("data-cursor-end");
+            if (sAttr !== null && eAttr !== null) {
+              const s = parseInt(sAttr, 10);
+              const e = parseInt(eAttr, 10);
+              if (!Number.isNaN(s) && !Number.isNaN(e)) {
+                start = s;
+                end = e;
+              }
+            }
+          }
+          if (
+            force ||
+            start !== lastSent.start ||
+            end !== lastSent.end
+          ) {
+            lastSent = { start, end };
+            Streamlit.setComponentValue({ start, end, timestamp: ts });
+          }
+        }
+
+        function attach() {
+          const ta = findEditorTextarea();
+          if (!ta) {
+            setTimeout(attach, 200);
+            return;
+          }
+          const events = ["click", "keyup", "mouseup", "focus", "input", "select"];
+          events.forEach(ev => ta.addEventListener(ev, () => sendCursor(false), true));
+          doc.addEventListener("selectionchange", () => {
+            if (doc.activeElement === ta) sendCursor(false);
+          }, true);
+          ta.addEventListener("blur", () => sendCursor(true), true);
+          // Initial send
+          sendCursor(true);
+        }
+
+        Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, () => {
+          attach();
+        });
+        Streamlit.setComponentReady();
+        Streamlit.setFrameHeight(0);
+      })();
+    </script>
+  </body>
+</html>
