@@ -1571,8 +1571,7 @@ def main():
                 # Store syntax for JS to insert - DON'T update Python state yet
                 # JavaScript will insert and then we'll read it back
                 st.session_state.pending_component_insert = syntax
-                # Trigger rerun to inject JavaScript for insertion
-                st.rerun()
+                # Note: No need to call st.rerun() here - Streamlit automatically reruns after callbacks
             
             try:
                 # Show grouped built-in components (now with translated names)
