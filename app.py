@@ -1086,6 +1086,8 @@ def main():
             new_lang = "zh" if lang_toggle else "en"
             if new_lang != current_lang:
                 st.session_state.ui_language = new_lang
+                # Reset component filter when language changes to avoid stale toggle state
+                st.session_state.components_wechat_only = False
                 # Refresh AI status text to current language when not busy
                 if not st.session_state.get("ai_busy"):
                     key = st.session_state.get("last_ai_status_key", "ai_status_idle")
