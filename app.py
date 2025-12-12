@@ -72,6 +72,7 @@ TRANSLATIONS = {
         "no_files": "No files yet",
         "file_name": "File Name",
         "click_to_insert": "Click to insert components",
+        "wechat_only_switch": "Only for WeChat/WeCom",
         "markdown_help": "Markdown Syntax Help",
         "image_assets": "Image & Assets",
         "upload_image": "Upload Image",
@@ -88,7 +89,7 @@ TRANSLATIONS = {
         "no_files_search": "No files match your search.",
         "no_files_yet": "No saved files yet. Create a new file or use a template to get started.",
         "no_templates_match": "No templates match your search.",
-        "click_to_insert_hint": "Click any button to insert. ✅=WeChat compatible, 🌐=HTML only",
+        "click_to_insert_hint": "Click any button to insert. Use the switch to show only WeChat/WeCom-compatible components.",
         "view_full_guide": "View Full Guide",
         "syntax_tip": "Tip: Click any syntax example above to copy it to your clipboard!",
         "add_context": "Add reference material to help AI",
@@ -262,6 +263,7 @@ TRANSLATIONS = {
         "no_files": "暂无文件",
         "file_name": "文件名",
         "click_to_insert": "点击插入组件",
+        "wechat_only_switch": "仅限微信/企微",
         "markdown_help": "Markdown 语法帮助",
         "image_assets": "图片与资源",
         "upload_image": "上传图片",
@@ -278,7 +280,7 @@ TRANSLATIONS = {
         "no_files_search": "没有匹配的文件",
         "no_files_yet": "暂无保存的文件。创建新文件或使用模板开始吧！",
         "no_templates_match": "没有匹配的模板",
-        "click_to_insert_hint": "点击按钮插入组件。✅=微信兼容，🌐=仅 HTML",
+        "click_to_insert_hint": "点击按钮插入组件。开启「仅限微信/企微」开关可只显示兼容组件。",
         "view_full_guide": "查看完整指南",
         "syntax_tip": "提示：点击上方的语法示例可复制到剪贴板！",
         "add_context": "添加参考资料帮助 AI",
@@ -1539,28 +1541,82 @@ def main():
         components_expanded = st.session_state.sidebar_expanded.get("add_components", not simple_mode)
         with st.expander(f"🧩 {get_text('add_components')}", expanded=components_expanded):
             st.caption(get_text("click_to_insert"))
+            wechat_only = st.checkbox(
+                get_text("wechat_only_switch"),
+                key="components_wechat_only",
+                value=st.session_state.get("components_wechat_only", False),
+                help=get_text("click_to_insert_hint"),
+            )
             
             # Group components by category (with translations)
             component_groups = {
                 get_text("layout"): [
-                    (get_text("comp_hero"), "::: hero\n# Title\nSubtitle\n:::"),
-                    (get_text("comp_2col"), "::: col-2\nLeft\n--split--\nRight\n:::"),
-                    (get_text("comp_3col"), "::: col-3\nOne\n--split--\nTwo\n--split--\nThree\n:::"),
+                    {
+                        "name": get_text("comp_hero"),
+                        "syntax": "::: hero\n# Title\nSubtitle\n:::",
+                        "wechat_supported": True,
+                    },
+                    {
+                        "name": get_text("comp_2col"),
+                        "syntax": "::: col-2\nLeft\n--split--\nRight\n:::",
+                        "wechat_supported": True,
+                    },
+                    {
+                        "name": get_text("comp_3col"),
+                        "syntax": "::: col-3\nOne\n--split--\nTwo\n--split--\nThree\n:::",
+                        "wechat_supported": True,
+                    },
                 ],
                 get_text("content"): [
-                    (get_text("comp_steps"), "::: steps\n1. Step One\n2. Step Two\n:::"),
-                    (get_text("comp_timeline"), "::: timeline\n2024 Start\n2025 Launch\n:::"),
-                    (get_text("comp_table"), "::: table\nHeader 1 | Header 2 | Header 3\nRow 1 Col 1 | Row 1 Col 2 | Row 1 Col 3\n:::"),
-                    (get_text("comp_card"), "::: card\n## Card Title\nCard content here.\n:::"),
+                    {
+                        "name": get_text("comp_steps"),
+                        "syntax": "::: steps\n1. Step One\n2. Step Two\n:::",
+                        "wechat_supported": True,
+                    },
+                    {
+                        "name": get_text("comp_timeline"),
+                        "syntax": "::: timeline\n2024 Start\n2025 Launch\n:::",
+                        "wechat_supported": True,
+                    },
+                    {
+                        "name": get_text("comp_table"),
+                        "syntax": "::: table\nHeader 1 | Header 2 | Header 3\nRow 1 Col 1 | Row 1 Col 2 | Row 1 Col 3\n:::",
+                        "wechat_supported": True,
+                    },
+                    {
+                        "name": get_text("comp_card"),
+                        "syntax": "::: card\n## Card Title\nCard content here.\n:::",
+                        "wechat_supported": True,
+                    },
                 ],
                 get_text("interactive"): [
-                    (get_text("comp_reveal"), "::: reveal\nSecret Content\n--cover--\n👆\n:::"),
-                    (get_text("comp_badge"), "[badge: NEW]"),
-                    (get_text("comp_button"), "\n[Button Label](https://link.com)\n"),
+                    {
+                        "name": get_text("comp_reveal"),
+                        "syntax": "::: reveal\nSecret Content\n--cover--\n👆\n:::",
+                        "wechat_supported": True,
+                    },
+                    {
+                        "name": get_text("comp_badge"),
+                        "syntax": "[badge: NEW]",
+                        "wechat_supported": True,
+                    },
+                    {
+                        "name": get_text("comp_button"),
+                        "syntax": "\n[Button Label](https://link.com)\n",
+                        "wechat_supported": True,
+                    },
                 ],
                 get_text("media"): [
-                    (get_text("comp_image"), "[IMG: describe your image]"),
-                    (get_text("comp_video"), '::: video src="https://example.com/video.mp4" poster="" caption="" autoplay=false muted=false loop=false :::'),
+                    {
+                        "name": get_text("comp_image"),
+                        "syntax": "[IMG: describe your image]",
+                        "wechat_supported": True,
+                    },
+                    {
+                        "name": get_text("comp_video"),
+                        "syntax": '::: video src="https://example.com/video.mp4" poster="" caption="" autoplay=false muted=false loop=false :::',
+                        "wechat_supported": False,  # WeChat/WeCom does not render video component
+                    },
                 ],
             }
             
@@ -1580,15 +1636,22 @@ def main():
             
                 for group_name, components in component_groups.items():
                     if not simple_mode or group_name in [layout_text, content_text, get_text("media")]:
+                        filtered_components = [
+                            comp for comp in components if (not wechat_only or comp["wechat_supported"])
+                        ]
+                        if not filtered_components:
+                            continue
                         st.markdown(f"**{group_name}**")
                         
                         # Display in grid (3 columns)
-                        cols_per_row = 3 if len(components) >= 3 else max(1, len(components))
-                        for i in range(0, len(components), cols_per_row):
+                        cols_per_row = 3 if len(filtered_components) >= 3 else max(1, len(filtered_components))
+                        for i in range(0, len(filtered_components), cols_per_row):
                             cols = st.columns(cols_per_row)
                             for j, col in enumerate(cols):
-                                if i + j < len(components):
-                                    comp_name, comp_syntax = components[i + j]
+                                if i + j < len(filtered_components):
+                                    comp_name = filtered_components[i + j]["name"]
+                                    comp_syntax = filtered_components[i + j]["syntax"]
+
                                     def add_component(syntax=comp_syntax):
                                         if "content" not in st.session_state: 
                                             st.session_state.content = ""
@@ -1606,7 +1669,14 @@ def main():
                             st.markdown("**🔌 Plugins**")
                             
                             # Show all plugins in a grid
-                            plugin_list = list(plugins)
+                            plugin_list = [
+                                plugin
+                                for plugin in list(plugins)
+                                if (not wechat_only or plugin.compatibility.get("wechat", False))
+                            ]
+                            if not plugin_list:
+                                st.markdown("_No compatible plugins._")
+                            
                             cols_per_row = 2
                             for i in range(0, len(plugin_list), cols_per_row):
                                 cols = st.columns(cols_per_row)
@@ -1615,7 +1685,6 @@ def main():
                                         plugin = plugin_list[i + j]
                                         if plugin.insertion_tool:
                                             plugin_display_name = get_plugin_name(plugin.name)
-                                            compat_icon = "✅" if plugin.compatibility.get("wechat", False) else "🌐"
                                             
                                             def add_plugin_component(plugin_syntax=plugin.insertion_tool):
                                                 if "content" not in st.session_state: 
@@ -1625,7 +1694,7 @@ def main():
                                         
                                             plugin_description = get_plugin_description(plugin.name, plugin.description)
                                             col.button(
-                                                f"{plugin_display_name} {compat_icon}",
+                                                f"{plugin_display_name}",
                                                 on_click=add_plugin_component,
                                                 use_container_width=True,
                                                 help=f"{plugin_description or get_text('plugin_component')}"
@@ -1635,9 +1704,6 @@ def main():
                             
             except Exception as e:
                 st.error("Components not available")
-            
-            if not simple_mode:
-                st.caption(f"💡 {get_text('click_to_insert_hint')}")
 
         # 3. APPEARANCE (Grouped settings)
         st.divider()
@@ -2016,16 +2082,6 @@ def main():
             browse_files_text = get_text("browse_files").replace("'", "\\'").replace('"', '\\"').replace('\n', '\\n')
             file_upload_limit_text = get_text("file_upload_limit").replace("'", "\\'").replace('"', '\\"').replace('\n', '\\n')
             # Custom visible Chinese labels (always rendered) — we hide Streamlit's built-ins
-            st.markdown(
-                f"""
-                <div id="mp-uploader-labels" style="margin-top: -6px; margin-bottom: 10px;">
-                    <div style="font-weight: 600; color: #1f1f1f; font-size: 14px;">{get_text("drag_drop")}</div>
-                    <div style="color: #666; font-size: 12px; margin-top: 4px;">{get_text("file_upload_limit")}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
             st.markdown(f"""
             <script>
             (function() {{
