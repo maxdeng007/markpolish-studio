@@ -2429,7 +2429,7 @@ Right column
 [IMG: describe your image]
 
 # Responsive video (raw HTML)
-<video src="https://example.com/video.mp4" controls style="width:100%;height:auto;display:block;"></video>
+<video src="https://example.com/video.mp4" poster="" controls style="width:100%;height:auto;display:block;"></video>
 
 # Video component (responsive)
 ::: video src="https://example.com/video.mp4" poster="" caption="" autoplay=false muted=false loop=false :::""", language="markdown")
