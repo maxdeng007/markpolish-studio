@@ -2525,10 +2525,13 @@ Right column
             st.session_state.pending_component_insert = None
 
         # Text area outside form to allow content change detection
+        # NOTE: We don't pass value= parameter to avoid Streamlit warning about
+        # both setting session state and passing value. The key="editor_content"
+        # ensures Streamlit reads from session_state.editor_content automatically.
         is_readonly = False
         txt = st.text_area(
             "MD", 
-            st.session_state.editor_content, 
+            value=None,  # Let Streamlit read from session_state via key
             height=600, 
             label_visibility="collapsed",
             key="editor_content",
@@ -3351,7 +3354,7 @@ Right column
                         # Use HTML comments as placeholders (markdown preserves them)
                         html_blocks = []
                 
-                        # Find all complete HTML elements
+                        # Find all complete HTML elements (including ::: components)
                         def extract_html(match):
                             html_block = match.group(0)
                             # Use HTML comment as placeholder (markdown preserves comments)
@@ -3359,8 +3362,8 @@ Right column
                             html_blocks.append(html_block)
                             return placeholder
                 
-                        # Match complete HTML elements (section, div, span, video) with proper closing tags
-                        html_pattern = r'<(section|div|span|video)[^>]*>.*?</\1>'
+                        # Improved pattern: handles nested tags, ::: components, and various HTML structures
+                        html_pattern = r':::[^:]+:::[^\n]*\n(?:[^\n]+\n)*?:::\s*:::[^\n]*|<(section|div|span|video)[^>]*>.*?</\1>|<(section|div|span|video)[^>]*/\s*>'
                         text_for_markdown = re_module.sub(html_pattern, extract_html, parsed_md, flags=re_module.DOTALL | re_module.IGNORECASE)
                 
                         # Process markdown (HTML comments are preserved)
@@ -3373,11 +3376,53 @@ Right column
                             wechat_html_inner = wechat_html_inner.replace(placeholder, html_block)
                 
                         wechat_html_inner = deep_inject_styles(wechat_html_inner, inline_styles)
+                        
+                        # Add comprehensive CSS for WeChat export
+                        primary = active_theme.get('primary', '#4A90E2')
+                        card_bg = active_theme.get('card', '#fff')
+                        radius = active_theme.get('radius', '12px')
+                        
+                        wechat_css = f"""
+                        <style>
+                        .mp-wechat {{font-family: inherit; line-height: 1.75; color: inherit;}}
+                        .mp-wechat p {{margin-bottom: 16px;}}
+                        .mp-wechat h1 {{color: {primary}; font-size: 24px; font-weight: bold; margin: 30px 0 20px 0;}}
+                        .mp-wechat h2 {{color: {primary}; font-size: 18px; font-weight: bold; margin: 30px 0 15px 0; border-bottom: 2px solid {primary}20; padding-bottom: 8px;}}
+                        .mp-wechat h3 {{font-size: 17px; font-weight: bold; margin: 20px 0 10px 0;}}
+                        .mp-wechat li {{margin-bottom: 8px;}}
+                        .mp-wechat ul, .mp-wechat ol {{padding-left: 20px; margin-bottom: 16px;}}
+                        .mp-wechat strong {{font-weight: bold; color: {primary};}}
+                        .mp-wechat img {{max-width: 100%; height: auto; display: block; margin: 12px auto; border-radius: {radius};}}
+                        .mp-wechat .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center; border-radius: {radius}; margin: 0 0 25px 0; box-shadow: inherit;}}
+                        .mp-wechat .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius}; box-shadow: inherit;}}
+                        .mp-wechat .mp-card h3 {{margin-top: 0; color: {primary};}}
+                        .mp-wechat .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0;}}
+                        .mp-wechat .mp-col {{flex: 1; background: {card_bg}; padding: 10px; border-radius: {radius}; box-shadow: inherit; min-width: 0;}}
+                        .mp-wechat .mp-step {{display: flex; gap: 12px; margin-bottom: 15px; align-items: center;}}
+                        .mp-wechat .mp-step__num {{width: 28px; height: 28px; min-width: 28px; border-radius: 50%; background: {primary}; color: {active_theme.get('bg', '#fff')}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;}}
+                        .mp-wechat .mp-timeline {{margin: 20px 0; padding-left: 15px;}}
+                        .mp-wechat .mp-timeline__item {{position: relative; padding-left: 20px; padding-bottom: 20px; border-left: 2px solid {primary};}}
+                        .mp-wechat .mp-timeline__dot {{position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: {primary};}}
+                        .mp-wechat .mp-badge {{display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: {primary}20; color: {primary};}}
+                        .mp-wechat .mp-btn-wrap {{text-align: center; margin: 30px 0;}}
+                        .mp-wechat .mp-btn {{display: inline-block; padding: 10px 25px; background: {primary}; color: #fff; border-radius: {radius}; text-decoration: none; font-weight: bold;}}
+                        .mp-wechat .mp-video {{position: relative; width: 100%; max-width: 900px; margin: 12px auto;}}
+                        .mp-wechat .mp-video video {{width: 100%; height: auto; display: block;}}
+                        .mp-wechat .mp-table {{width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;}}
+                        .mp-wechat .mp-table th {{background: {primary}; color: #fff; padding: 12px 15px; text-align: left; border: 1px solid #ddd;}}
+                        .mp-wechat .mp-table td {{padding: 12px 15px; text-align: left; border: 1px solid #ddd;}}
+                        .mp-wechat .mp-reveal {{position: relative; margin: 20px 0; cursor: pointer; overflow: hidden; border-radius: {radius};}}
+                        .mp-wechat .mp-reveal__content {{padding: 15px; border: 1px dashed #ccc; border-radius: 8px; background: #fff; min-height: 100px;}}
+                        /* Preserve inline styles from components */
+                        .mp-wechat section[style] {{border-radius: {radius}; padding: 16px; margin: 16px 0;}}
+                        .mp-wechat div[style*="background"] {{border-radius: {radius};}}
+                        </style>
+                        """
+                        
                         # Wrapper div: add gentle padding for WeChat paste
                         wrapper_bg = active_theme.get('bg', '#fff')
                         wrapper_style = f"background-color: {wrapper_bg}; padding: 16px; margin: 0; box-sizing: border-box;"
-                        # Center all images inside wechat markup
-                        wechat_html_inner = f'<style>.mp-wechat img{{display:block;margin:0 auto;}}</style><div class="mp-wechat">{wechat_html_inner}</div>'
+                        wechat_html_inner = f'{wechat_css}<div class="mp-wechat">{wechat_html_inner}</div>'
                         wechat_final = f'<div style="{wrapper_style}">{wechat_html_inner}</div>'
                 
                         # Cache the preview (include theme + view in cache key)
@@ -3415,6 +3460,7 @@ Right column
         
         t = active_theme
         # For standard HTML, also need to preserve HTML blocks
+        # Improved regex to handle both nested tags and self-contained components
         import re as re_module_std
         html_blocks_std = []
         def extract_html_std(match):
@@ -3422,27 +3468,82 @@ Right column
             placeholder = f"<!--MPHTML{len(html_blocks_std)}-->"
             html_blocks_std.append(html_block)
             return placeholder
-        parsed_md_for_std = re_module_std.sub(r'<(section|div|span|video)[^>]*>.*?</\1>', extract_html_std, parsed_md, flags=re_module_std.DOTALL | re_module_std.IGNORECASE)
+        
+        # Match both complete elements with closing tags AND self-closing or single-line components
+        # This handles: <section>...</section>, <div class="x">...</div>, ::: components :::
+        html_pattern_std = r':::[^:]+:::[^\n]*\n(?:[^\n]+\n)*?:::\s*:::[^\n]*|<(section|div|span|video)[^>]*>.*?</\1>|<(section|div|span|video)[^>]*/\s*>'
+        parsed_md_for_std = re_module_std.sub(html_pattern_std, extract_html_std, parsed_md, flags=re_module_std.DOTALL | re_module_std.IGNORECASE)
         standard_html_content = markdown.markdown(parsed_md_for_std, extensions=['nl2br', 'extra'])
         for i, html_block in enumerate(html_blocks_std):
             standard_html_content = standard_html_content.replace(f"<!--MPHTML{i}-->", html_block)
+        
+        # Comprehensive component CSS that matches actual component output
+        primary = t['primary']
+        card_bg = t.get('card', '#fff')
+        radius = t.get('radius', '12px')
+        shadow = t.get('shadow', '0 4px 12px rgba(0,0,0,0.08)')
+        
         component_css = f"""
-        body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.7;color:{t['text']};background:{t['bg']};}}
-        img{{max-width:100%;height:auto;display:block;margin:0 auto;}}
-        a{{color:{t['primary']};}}
+        body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.75;color:{t['text']};background:{t['bg']};}}
+        img{{max-width:100%;height:auto;display:block;margin:12px auto;border-radius:{radius};}}
+        a{{color:{primary};text-decoration:none;}}
+        p{{margin:0 0 16px 0;line-height:1.75;}}
+        h1{{font-size:24px;font-weight:bold;color:{primary};margin:30px 0 20px 0;line-height:1.4;}}
+        h2{{font-size:18px;font-weight:bold;color:{primary};margin:30px 0 15px 0;border-bottom:2px solid {primary}20;padding-bottom:8px;}}
+        h3{{font-size:17px;font-weight:bold;margin:20px 0 10px 0;}}
+        ul,ol{{padding-left:20px;margin:0 0 16px 0;}}
+        li{{margin:0 0 8px 0;line-height:1.75;}}
+        strong{{font-weight:bold;color:{primary};}}
+        
+        /* Hero Component */
+        .mp-hero{{background:{card_bg};padding:35px 20px;text-align:center;border-radius:{radius};margin:0 0 25px 0;box-shadow:{shadow};box-sizing:border-box;}}
+        .mp-hero h1{{text-align:center;margin-top:0;}}
+        
+        /* Card Component */
+        .mp-card{{background:{card_bg};border-left:4px solid {primary};padding:15px;margin:20px 0;border-radius:{radius};box-shadow:{shadow};box-sizing:border-box;}}
+        .mp-card h3{{margin-top:0;font-size:16px;color:{primary};}}
+        
+        /* Grid Layout */
+        .mp-grid{{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap;}}
+        .mp-col{{flex:1 1 0;min-width:200px;background:{card_bg};padding:10px;border-radius:{radius};box-shadow:{shadow};box-sizing:border-box;}}
+        
+        /* Video Component */
         .mp-video{{position:relative;width:100%;max-width:900px;margin:12px auto;}}
         .mp-video video{{width:100%;height:auto;display:block;}}
-        .mp-grid{{display:flex;gap:10px;flex-wrap:wrap;}}
-        .mp-col{{flex:1 1 0;min-width:200px;}}
-        .mp-btn-container a{{display:inline-block;padding:10px 16px;border-radius:8px;background:{t['primary']};color:#fff;text-decoration:none;}}
-        .mp-card{{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin:12px 0;box-shadow:{t.get('shadow', '0 4px 12px rgba(0,0,0,0.08)')};}}
-        .mp-card h3{{margin-top:0;}}
-        .mp-step{{display:flex;gap:10px;margin:10px 0;align-items:center;}}
-        .mp-step-num{{width:28px;height:28px;border-radius:50%;background:{t['primary']};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;}}
-        .mp-timeline-item{{position:relative;padding-left:18px;margin:8px 0;}}
-        .mp-timeline-dot{{position:absolute;left:0;top:8px;width:10px;height:10px;border-radius:50%;background:{t['primary']};}}
+        .mp-video__caption{{font-size:13px;color:#666;margin-top:6px;text-align:center;}}
+        
+        /* Button Component */
+        .mp-btn-wrap{{text-align:center;margin:30px 0;}}
+        .mp-btn{{display:inline-block;padding:10px 25px;background:{primary};color:#fff;border-radius:{radius};text-decoration:none;font-weight:bold;}}
+        
+        /* Steps Component */
+        .mp-steps{{margin:20px 0;}}
+        .mp-step{{display:flex;gap:12px;margin-bottom:15px;align-items:center;}}
+        .mp-step__num{{width:28px;height:28px;min-width:28px;border-radius:50%;background:{primary};color:{t.get('bg', '#fff')};display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;}}
+        .mp-step__content{{flex:1;}}
+        
+        /* Timeline Component */
+        .mp-timeline{{margin:20px 0;padding-left:15px;}}
+        .mp-timeline__item{{position:relative;padding-left:20px;padding-bottom:20px;border-left:2px solid {primary};}}
+        .mp-timeline__dot{{position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;background:{primary};}}
+        
+        /* Badge Component */
+        .mp-badge{{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;vertical-align:middle;margin-right:5px;background:{primary}20;color:{primary};}}
+        
+        /* Reveal Component */
+        .mp-reveal{{position:relative;margin:20px 0;cursor:pointer;overflow:hidden;border-radius:{radius};}}
+        .mp-reveal__content{{padding:15px;border:1px dashed #ccc;border-radius:8px;background:#fff;min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;}}
+        
+        /* Table Component */
+        .mp-table{{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;}}
+        .mp-table th{{background:{primary};color:#fff;padding:12px 15px;text-align:left;border:1px solid #ddd;font-weight:bold;}}
+        .mp-table td{{padding:12px 15px;text-align:left;border:1px solid #ddd;}}
+        .mp-table tr:nth-child(even){{background:{card_bg}40;}}
+        
+        /* Section/div with inline styles (WeChat mode components) */
+        section[style*="background"],div[style*="background"]{{border-radius:{radius};padding:16px;margin:16px 0;}}
         """
-        standard_full = f"""<!DOCTYPE html><html><head><style>{component_css}</style></head><body>{standard_html_content}</body></html>"""
+        standard_full = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><style>{component_css}</style></head><body>{standard_html_content}</body></html>"""
         
         # Performance indicator (subtle, only when using cache)
         preview_status = ""
@@ -3485,16 +3586,43 @@ Right column
                             placeholder = f"<!--MPHTML{len(html_blocks_final)}-->"
                             html_blocks_final.append(html_block)
                             return placeholder
-                        text_for_markdown_final = re_module_final.sub(r'<(section|div|span)[^>]*>.*?</\1>', extract_html_final, parsed_md, flags=re_module_final.DOTALL | re_module_final.IGNORECASE)
+                        
+                        # Improved pattern to handle ::: components and various HTML structures
+                        html_pattern_final = r':::[^:]+:::[^\n]*\n(?:[^\n]+\n)*?:::\s*:::[^\n]*|<(section|div|span|video)[^>]*>.*?</\1>|<(section|div|span|video)[^>]*/\s*>'
+                        text_for_markdown_final = re_module_final.sub(html_pattern_final, extract_html_final, parsed_md, flags=re_module_final.DOTALL | re_module_final.IGNORECASE)
                         raw_html_final = markdown.markdown(text_for_markdown_final, extensions=['nl2br', 'extra'])
                         wechat_html_inner_final = raw_html_final
                         for i, html_block in enumerate(html_blocks_final):
                             placeholder = f"<!--MPHTML{i}-->"
                             wechat_html_inner_final = wechat_html_inner_final.replace(placeholder, html_block)
                         wechat_html_inner_final = deep_inject_styles(wechat_html_inner_final, inline_styles)
+                        
+                        # Add CSS for fallback case too
+                        primary = active_theme.get('primary', '#4A90E2')
+                        card_bg = active_theme.get('card', '#fff')
+                        radius = active_theme.get('radius', '12px')
+                        fallback_css = f"""
+                        <style>
+                        .mp-fallback {{font-family: inherit; line-height: 1.75; color: inherit;}}
+                        .mp-fallback p {{margin-bottom: 16px;}}
+                        .mp-fallback h1 {{color: {primary}; font-size: 24px; font-weight: bold;}}
+                        .mp-fallback h2 {{color: {primary}; font-size: 18px; font-weight: bold;}}
+                        .mp-fallback .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center; border-radius: {radius};}}
+                        .mp-fallback .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius};}}
+                        .mp-fallback .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap;}}
+                        .mp-fallback .mp-col {{flex: 1; background: {card_bg}; padding: 10px; border-radius: {radius};}}
+                        .mp-fallback .mp-step {{display: flex; gap: 12px; margin-bottom: 15px;}}
+                        .mp-fallback .mp-step__num {{width: 28px; height: 28px; border-radius: 50%; background: {primary}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold;}}
+                        .mp-fallback .mp-timeline {{margin: 20px 0; padding-left: 15px;}}
+                        .mp-fallback .mp-timeline__item {{position: relative; padding-left: 20px; border-left: 2px solid {primary};}}
+                        .mp-fallback .mp-timeline__dot {{position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: {primary};}}
+                        .mp-fallback img {{max-width: 100%; height: auto;}}
+                        </style>
+                        """
+                        wechat_html_inner_final = f'<div class="mp-fallback">{wechat_html_inner_final}</div>'
                         wrapper_bg = active_theme.get('bg', '#fff')
                         wrapper_style = f"background-color: {wrapper_bg}; padding: 0; margin: 0; box-sizing: border-box;"
-                        wechat_final = f'<div style="{wrapper_style}">{wechat_html_inner_final}</div>'
+                        wechat_final = f'{fallback_css}<div style="{wrapper_style}">{wechat_html_inner_final}</div>'
                     except Exception as e:
                         # If rendering fails, try simple markdown render
                         try:

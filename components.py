@@ -12,6 +12,271 @@ except ImportError:
     load_image_from_library = None
     get_image_library = None
 
+# --- CSS CONSTANTS FOR CMS-COMPATIBLE OUTPUT ---
+# These are injected into the preview/HTML output for consistent styling
+MP_CSS_STYLES = """
+<style>
+/* MarkPolish Component Styles - CMS Compatible */
+.mp-content {
+    font-family: inherit;
+    line-height: 1.75;
+    color: inherit;
+}
+.mp-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 12px 0;
+    border-radius: inherit;
+}
+.mp-content p {
+    margin-bottom: 16px;
+    line-height: 1.75;
+}
+.mp-content h1 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+.mp-content h2 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid transparent;
+    padding-bottom: 8px;
+}
+.mp-content h3 {
+    font-size: 17px;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+.mp-content a {
+    text-decoration: none;
+}
+.mp-content strong {
+    font-weight: bold;
+}
+
+/* Hero Component */
+.mp-hero {
+    padding: 35px 20px;
+    text-align: center;
+    border-radius: inherit;
+    margin: 0 0 25px 0;
+    box-shadow: inherit;
+    box-sizing: border-box;
+    width: 100%;
+}
+.mp-hero h1 {
+    margin-top: 0;
+    text-align: center;
+}
+
+/* Card Component */
+.mp-card {
+    border-radius: inherit;
+    box-shadow: inherit;
+    padding: 20px;
+    margin: 20px 0;
+    box-sizing: border-box;
+    width: 100%;
+}
+.mp-card h3 {
+    margin-top: 0;
+    font-size: 16px;
+}
+
+/* Grid Layout Components */
+.mp-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+.mp-col {
+    flex: 1;
+    min-width: 0;
+    padding: 10px;
+    border-radius: inherit;
+    box-shadow: inherit;
+    box-sizing: border-box;
+}
+
+/* Steps Component */
+.mp-steps {
+    margin: 20px 0;
+    width: 100%;
+}
+.mp-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+.mp-step__num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mp-step__content {
+    flex: 1;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Timeline Component */
+.mp-timeline {
+    margin: 20px 0;
+    padding-left: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.mp-timeline__item {
+    position: relative;
+    padding-left: 20px;
+    padding-bottom: 20px;
+    border-left: 2px solid;
+    box-sizing: border-box;
+}
+.mp-timeline__dot {
+    position: absolute;
+    left: -7px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+/* Badge Component */
+.mp-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+/* Button Component */
+.mp-btn-wrap {
+    text-align: center;
+    margin: 30px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+.mp-btn {
+    display: inline-block;
+    padding: 10px 25px;
+    border-radius: inherit;
+    text-decoration: none;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Video Component */
+.mp-video {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin: 12px auto;
+    box-sizing: border-box;
+}
+.mp-video video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.mp-video__caption {
+    font-size: 13px;
+    margin-top: 6px;
+    text-align: center;
+}
+
+/* Table Component */
+.mp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+.mp-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+    border: 1px solid #ddd;
+}
+.mp-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+.mp-table tr:nth-child(even) {
+    background-color: rgba(0,0,0,0.02);
+}
+
+/* Reveal Component */
+.mp-reveal {
+    position: relative;
+    margin: 20px 0;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: inherit;
+}
+.mp-reveal__content {
+    padding: 15px;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.mp-reveal__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .mp-grid {
+        flex-direction: column;
+    }
+    .mp-col {
+        width: 100%;
+    }
+    .mp-hero {
+        padding: 25px 15px;
+    }
+    .mp-card {
+        padding: 15px;
+    }
+}
+</style>
+"""
+
 # --- 0. COMPONENT COMPATIBILITY ---
 # Define which components work in WeChat vs HTML
 COMPONENT_COMPATIBILITY = {
@@ -198,21 +463,25 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
     # Syntax: ::: steps \n 1. Item \n 2. Item \n :::
     def steps_r(m):
         lines = [l.strip() for l in m.group(1).split('\n') if l.strip()]
-        # Use section with clear:both to prevent interference with other components
-        html = '<section class="mp-steps-wrapper" style="margin: 20px 0; display: block; clear: both; width: 100%;">'
-        for i, line in enumerate(lines, 1):
-            # Remove existing numbering like "1." or "2)"
-            content = re.sub(r'^\d+[\.\)]\s*', '', line)
-            
-            if mode == "wechat": 
+        
+        if mode == "wechat": 
+            # WeChat mode - use inline styles
+            html = '<section class="mp-steps-wrapper" style="margin: 20px 0; display: block; clear: both; width: 100%;">'
+            for i, line in enumerate(lines, 1):
+                content = re.sub(r'^\d+[\.\)]\s*', '', line)
                 html += (f'<div style="{s["step_box"]}">'
                          f'<span style="{s["step_num"]}">{i}</span>'
                          f'<span style="flex: 1 1 auto; display: inline-block; vertical-align: middle;">{content}</span></div>')
-            else: 
+            html += '</section>'
+        else: 
+            # Web mode - use CSS classes
+            html = '<div class="mp-steps">'
+            for i, line in enumerate(lines, 1):
+                content = re.sub(r'^\d+[\.\)]\s*', '', line)
                 html += (f'<div class="mp-step">'
-                         f'<div class="mp-step-num">{i}</div>'
-                         f'<div>{content}</div></div>')
-        html += '</section>'
+                         f'<span class="mp-step__num">{i}</span>'
+                         f'<span class="mp-step__content">{content}</span></div>')
+            html += '</div>'
         return html
         
     text = re.sub(r'(?is):::\s*steps\n(.*?)\n:::', steps_r, text)
@@ -221,17 +490,26 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
     # Syntax: ::: timeline \n Year Event \n :::
     def time_r(m):
         lines = [l.strip() for l in m.group(1).split('\n') if l.strip()]
-        # Use section with clear:both to prevent interference with other components
-        html = '<section class="mp-timeline-wrapper" style="margin: 20px 0; padding-left: 15px; display: block; clear: both; width: 100%;">'
-        for line in lines:
-            if mode == "wechat": 
+        primary_color = s.get('primary', '#4A90E2')
+        
+        if mode == "wechat": 
+            # WeChat mode - use inline styles
+            html = '<section class="mp-timeline-wrapper" style="margin: 20px 0; padding-left: 15px; display: block; clear: both; width: 100%;">'
+            for line in lines:
                 html += (f'<div style="{s["time_box"]}">'
                          f'<span style="{s["time_dot"]}"></span>'
                          f'<span style="display: inline-block; vertical-align: middle;">{line}</span></div>')
-            else: 
-                html += (f'<div class="mp-timeline-item">'
-                         f'<div class="mp-timeline-dot"></div>{line}</div>')
-        html += '</section>'
+            html += '</section>'
+        else: 
+            # Web mode - use CSS classes with dynamic primary color
+            timeline_style = f'border-left-color: {primary_color};'
+            dot_style = f'background-color: {primary_color};'
+            html = '<div class="mp-timeline">'
+            for line in lines:
+                html += (f'<div class="mp-timeline__item" style="{timeline_style}">'
+                         f'<span class="mp-timeline__dot" style="{dot_style}"></span>'
+                         f'<span>{line}</span></div>')
+            html += '</div>'
         return html
         
     text = re.sub(r'(?is):::\s*timeline\n(.*?)\n:::', time_r, text)
@@ -243,39 +521,53 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
         cover_text = m.group(2).strip() if m.group(2) else "Tap to Reveal"
         unique_id = f"rev_{random.randint(10000, 99999)}"
         
-        # Base styles for the inner container
-        inner_style = (f'border: 1px dashed #ccc; padding: 15px; border-radius: 8px; '
-                       f'background: #fff; min-height: 100px; display: flex; '
-                       f'align-items: center; justify-content: center; text-align: center;')
-        
-        # CAN FIX: Use s['primary'] for the SVG rect fill color
+        # Get primary color for styling
         primary_color = s.get("primary", "#4A90E2")
         
-        svg_overlay = f"""
-        <div style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:10;">
-            <svg style="width:100%; height:100%; cursor:pointer;" viewBox="0 0 300 100" preserveAspectRatio="none">
-                <g style="cursor:pointer;" pointer-events="all">
-                    <rect width="100%" height="100%" fill="{primary_color}" rx="8" />
-                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-weight="bold" font-size="24">{cover_text}</text>
-                    <animate attributeName="opacity" begin="click;touchstart" from="1" to="0" dur="0.3s" fill="freeze" restart="never" />
-                    <set attributeName="visibility" to="hidden" begin="click+0.3s;touchstart+0.3s" />
-                </g>
-            </svg>
-        </div>
-        """
-        
-        return f"""
-<section style="{s['reveal_box']}" id="{unique_id}">
-    <div style="{inner_style}">{content}</div>
-    {svg_overlay}
-</section>
-"""
-    # Modified Regex to handle potentially messy newlines around the tags
+        # WeChat mode uses basic inline styles, web mode uses CSS classes
+        if mode == "wechat":
+            inner_style = (f'border: 1px dashed #ccc; padding: 15px; border-radius: 8px; '
+                          f'background: #fff; min-height: 100px; display: flex; '
+                          f'align-items: center; justify-content: center; text-align: center;')
+            box_style = s.get('reveal_box', 'position: relative; margin: 20px 0; cursor: pointer; overflow: hidden; border-radius: 8px;')
+            
+            svg_overlay = f"""
+            <div style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:10;">
+                <svg style="width:100%; height:100%; cursor:pointer;" viewBox="0 0 300 100" preserveAspectRatio="none">
+                    <g style="cursor:pointer;" pointer-events="all">
+                        <rect width="100%" height="100%" fill="{primary_color}" rx="8" />
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-weight="bold" font-size="24">{cover_text}</text>
+                        <animate attributeName="opacity" begin="click;touchstart" from="1" to="0" dur="0.3s" fill="freeze" restart="never" />
+                        <set attributeName="visibility" to="hidden" begin="click+0.3s;touchstart+0.3s" />
+                    </g>
+                </svg>
+            </div>
+            """
+            return f'<section style="{box_style}" id="{unique_id}"><div style="{inner_style}">{content}</div>{svg_overlay}</section>'
+        else:
+            # Web mode - use CSS classes
+            return f"""
+            <div class="mp-reveal" id="{unique_id}">
+                <div class="mp-reveal__content">{content}</div>
+                <div class="mp-reveal__overlay">
+                    <svg style="width:100%; height:100%; cursor:pointer;" viewBox="0 0 300 100" preserveAspectRatio="none">
+                        <g style="cursor:pointer;" pointer-events="all">
+                            <rect width="100%" height="100%" fill="{primary_color}" rx="8" />
+                            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-weight="bold" font-size="24">{cover_text}</text>
+                            <animate attributeName="opacity" begin="click;touchstart" from="1" to="0" dur="0.3s" fill="freeze" restart="never" />
+                            <set attributeName="visibility" to="hidden" begin="click+0.3s;touchstart+0.3s" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+            """
+    
     text = re.sub(r'(?is):::\s*reveal\s*(.*?)\s*--cover--\s*(.*?)\s*:::', reveal_r, text)
 
     # 7. Custom Badge Replacement
     # Syntax: [badge: Text]
-    text = re.sub(r'\[badge:\s*(.*?)\]', f'<span style="{s["badge"]}">\\1</span>', text, flags=re.IGNORECASE)
+    badge_style = s.get("badge", f"background-color: {s.get('primary', '#4A90E2')}20; color: {s.get('primary', '#4A90E2')}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; vertical-align: middle; margin-right: 5px;")
+    text = re.sub(r'\[badge:\s*(.*?)\]', f'<span class="mp-badge" style="{badge_style}">\\1</span>', text, flags=re.IGNORECASE)
 
     # 8. Grid Layout (2 or 3 columns)
     # Syntax: ::: col-2 \n A --split-- B \n :::
@@ -300,31 +592,51 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
         if not lines:
             return m.group(0)
         
-        # Common table styles
-        table_style = "width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;"
-        th_style = f"background-color: {s.get('primary', '#4A90E2')}; color: white; padding: 12px 15px; text-align: left; border: 1px solid #ddd; font-weight: bold;"
-        td_style = "padding: 12px 15px; text-align: left; border: 1px solid #ddd;"
-        tr_even_style = f"background-color: {s.get('card', '#f8f9fa')};"
+        primary_color = s.get('primary', '#4A90E2')
+        card_bg = s.get('card', '#f8f9fa')
         
-        html = f'<table style="{table_style}">'
-        
-        for idx, line in enumerate(lines):
-            cells = [c.strip() for c in line.split('|')]
-            if idx == 0:
-                # Header row
-                html += '<thead><tr>'
-                for cell in cells:
-                    html += f'<th style="{th_style}">{cell}</th>'
-                html += '</tr></thead><tbody>'
-            else:
-                # Data row
-                row_bg = tr_even_style if idx % 2 == 0 else ""
-                html += f'<tr style="{row_bg}">'
-                for cell in cells:
-                    html += f'<td style="{td_style}">{cell}</td>'
-                html += '</tr>'
-        
-        html += '</tbody></table>'
+        # WeChat mode uses inline styles, web mode uses CSS classes
+        if mode == "wechat":
+            table_style = "width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;"
+            th_style = f"background-color: {primary_color}; color: white; padding: 12px 15px; text-align: left; border: 1px solid #ddd; font-weight: bold;"
+            td_style = "padding: 12px 15px; text-align: left; border: 1px solid #ddd;"
+            tr_even_style = f"background-color: {card_bg};"
+            
+            html = f'<table style="{table_style}">'
+            for idx, line in enumerate(lines):
+                cells = [c.strip() for c in line.split('|')]
+                if idx == 0:
+                    html += '<thead><tr>'
+                    for cell in cells:
+                        html += f'<th style="{th_style}">{cell}</th>'
+                    html += '</tr></thead><tbody>'
+                else:
+                    row_bg = tr_even_style if idx % 2 == 0 else ""
+                    html += f'<tr style="{row_bg}">'
+                    for cell in cells:
+                        html += f'<td style="{td_style}">{cell}</td>'
+                    html += '</tr>'
+            html += '</tbody></table>'
+        else:
+            # Web mode - use CSS classes
+            th_style = f"background-color: {primary_color}; color: white;"
+            tr_even_style = f"background-color: {card_bg};"
+            
+            html = '<table class="mp-table">'
+            for idx, line in enumerate(lines):
+                cells = [c.strip() for c in line.split('|')]
+                if idx == 0:
+                    html += '<thead><tr>'
+                    for cell in cells:
+                        html += f'<th style="{th_style}">{cell}</th>'
+                    html += '</tr></thead><tbody>'
+                else:
+                    row_bg = tr_even_style if idx % 2 == 0 else ""
+                    html += f'<tr style="{row_bg}">'
+                    for cell in cells:
+                        html += f'<td>{cell}</td>'
+                    html += '</tr>'
+            html += '</tbody></table>'
         return html
     
     text = re.sub(r'(?is):::\s*table\n(.*?)\n:::', table_r, text)
@@ -333,12 +645,14 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
 
     # 9. Button Links
     # Syntax: [Label](url) on its own line
-    if mode=="wechat": 
+    if mode == "wechat": 
+        btn_style = s.get("btn", f"background-color: {s.get('primary', '#4A90E2')}; color: #fff; padding: 10px 25px; border-radius: {s.get('radius', '8px')}; text-decoration: none; display: inline-block; font-weight: bold;")
         text = re.sub(r'(?m)^\[(.*?)\]\((.*?)\)\s*$', 
-                      f'<div style="{s["btn_wrap"]}"><a href="\\2" style="{s["btn"]}">\\1</a></div>', text)
+                      f'<div style="{s["btn_wrap"]}"><a href="\\2" style="{btn_style}">\\1</a></div>', text)
     else: 
+        btn_style = s.get("btn", f"background-color: {s.get('primary', '#4A90E2')}; color: #fff;")
         text = re.sub(r'(?m)^\[(.*?)\]\((.*?)\)\s*$', 
-                      f'<div class="mp-btn-container"><a href="\\2" class="mp-btn">\\1</a></div>', text)
+                      f'<div class="mp-btn-wrap"><a href="\\2" class="mp-btn" style="{btn_style}">\\1</a></div>', text)
     
     # 10. Card Component (Explicit syntax to avoid conflict with H2)
     # Syntax: ::: card \n ## Title \n Content \n :::
