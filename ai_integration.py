@@ -78,19 +78,33 @@ def _get_provider_icon(provider_type: str) -> str:
 
 def check_connection(engine, url, key):
     """Check connection to AI service"""
-    if engine == "Ollama (Local)":
+    # Normalize engine name for consistency
+    engine_normalized = engine.lower().strip()
+    
+    if "ollama" in engine_normalized:
         try:
             session = requests.Session()
             session.trust_env = False 
-            clean_url = url.replace("/v1", "")
-            response = session.get(clean_url, timeout=0.5)
+            # Ollama's base URL without /v1
+            clean_url = url.replace("/v1", "").rstrip("/")
+            # Try both /api/tags and root endpoint
+            response = session.get(f"{clean_url}/api/tags", timeout=2)
             if response.status_code == 200: 
                 return True, "✅ Online (Ollama)"
-            else: 
-                return False, f"⚠️ Status: {response.status_code}"
-        except: 
-            return False, "❌ Offline"
-    elif engine == "OpenRouter":
+            else:
+                # Fallback: try root
+                response = session.get(clean_url, timeout=1)
+                if response.status_code == 200:
+                    return True, "✅ Online (Ollama)"
+                else:
+                    return False, f"⚠️ Status: {response.status_code}"
+        except requests.exceptions.Timeout:
+            return False, "⏱️ Timeout"
+        except requests.exceptions.ConnectionError:
+            return False, "❌ Connection Failed"
+        except Exception as e:
+            return False, f"❌ Error: {str(e)[:30]}"
+    elif "openrouter" in engine_normalized:
         if not key: 
             return False, "⚠️ Missing Key"
         try:
@@ -173,8 +187,13 @@ def run_ai(text, context, config, task_type="polish", content_type=None, availab
         return text, "❌ pip install openai"
     
     key = config.get('key')
-    if config['engine'] == "Ollama (Local)": 
-        key = "ollama"
+    engine = config.get('engine', '').lower()
+    
+    # Normalize Ollama detection
+    is_ollama = "ollama" in engine
+    
+    if is_ollama: 
+        key = "ollama"  # Ollama doesn't need API key
     
     # Build plugin component list for AI
     plugin_components_info = ""
@@ -276,19 +295,25 @@ def run_ai(text, context, config, task_type="polish", content_type=None, availab
         )
         user_content = f"CONTENT:\n{text}"
     else:
-        # Default polish task
+        # Default polish task with context
         sys_msg = (
-            "You are a specialized Markdown Formatting Engine. "
-            "1. If Context provided, use it to rewrite/improve the Input. "
-            "2. If Context is empty, just polish the Input. "
-            "3. Output polished markdown only. "
-            "4. CRITICAL: Protect [IMG] and ::: tags."
-            f"{style_instruction}"
+            "You are a professional Markdown Editor. "
+            "Your task is to polish and improve the content while STRICTLY preserving the original structure. "
+            "RULES (follow in order):\n"
+            "1. Do NOT change, move, add, or remove any headings (#, ##, ###)\n"
+            "2. Do NOT change the order of paragraphs\n"
+            "3. Do NOT add or remove line breaks\n"
+            "4. Do NOT modify [IMG] tags or ::: component tags\n"
+            "5. Only improve: grammar, wording, flow, and clarity within each existing paragraph\n"
+            "6. Keep the same tone and style as the original\n"
+            "7. If context is provided, incorporate it naturally without changing structure\n"
+            "8. Output ONLY the polished content, nothing else"
         )
-        user_content = f"CONTEXT:\n{context}\n\nINPUT:\n{text}"
+        user_content = f"CONTEXT:\n{context}\n\nCONTENT TO POLISH:\n{text}"
     
     try:
-        client = httpx.Client(trust_env=False) if config['engine']=="Ollama (Local)" else httpx.Client()
+        # Use Ollama-compatible client for local Ollama instances
+        client = httpx.Client(trust_env=False, timeout=60.0) if is_ollama else httpx.Client(timeout=30.0)
         ai = OpenAI(base_url=config['url'], api_key=key, http_client=client)
         res = ai.chat.completions.create(
             model=config['model'], 

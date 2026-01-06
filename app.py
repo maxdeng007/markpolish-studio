@@ -1043,9 +1043,22 @@ def main():
     div[data-testid="stElementContainer"][style*="height: 0px"] {
         display: none !important;
     }
-    /* Set gap to 0 for main content blocks */
-    .st-emotion-cache-tn0cau {
+    /* Set gap to 0 for main content blocks only (not sidebar) */
+    section.main .st-emotion-cache-tn0cau {
         gap: 0 !important;
+    }
+    /* Add proper spacing for sidebar elements */
+    section.tSidebar .stSelectbox {
+        margin-bottom: 0.75rem !important;
+    }
+    section.tSidebar .stTextInput {
+        margin-bottom: 0.5rem !important;
+    }
+    section.tSidebar .stHorizontalBlock {
+        gap: 0.5rem !important;
+    }
+    section.tSidebar .stHorizontalBlock .stButton {
+        flex: 1 !important;
     }
     /* Responsive padding for larger screens */
     @media (min-width: calc(736px + 8rem)) {
@@ -1061,8 +1074,8 @@ def main():
         max-width: 100% !important;
     }
     /* Shrink left/right padding on vertical blocks (editor/preview wrapper) */
-    .stVerticalBlock[data-testid="stVerticalBlock"],
-    .st-emotion-cache-tn0cau {
+    section.main .stVerticalBlock[data-testid="stVerticalBlock"],
+    section.main .st-emotion-cache-tn0cau {
         margin-left: 0 !important;
         margin-right: 0 !important;
         padding-left: 0 !important;
@@ -3478,6 +3491,11 @@ Right column
             st.session_state.last_failed_ai_action = None
         if "last_titles_result" not in st.session_state:
             st.session_state.last_titles_result = ""
+        # Initialize context_text if not present (fixes NameError)
+        if "context_text" not in st.session_state:
+            st.session_state.context_text = ""
+        # Extract context_text for use in AI actions
+        context_text = st.session_state.context_text
         MAX_AI_INPUT_CHARS = 8000
 
         def set_ai_status(key: str, action_label: str = ""):
@@ -3503,17 +3521,25 @@ Right column
                     try:
                         with st.spinner(get_text("brainstorming_titles")):
                             titles, stat = run_ai(current_txt, "", ai_cfg, task_type="titles", content_type=ai_content_type)
-                        st.toast(titles, icon="ℹ️")
-                        st.session_state.last_titles_result = titles
+                        
+                        # Check if AI returned an error message
+                        if stat.startswith("⚠️") or stat.startswith("❌"):
+                            raise Exception(stat)
+                        
+                        # Store titles in session state for persistent display
+                        st.session_state.generated_titles = titles
                         detected_lang = detect_language(current_txt) if current_txt else "English"
-                        lang_text = get_text("detected_language").format(lang=detected_lang)
-                        st.caption(f"🌐 {lang_text}")
+                        st.toast(get_text("detected_language").format(lang=detected_lang), icon="ℹ️")
+                        
                         set_ai_status("ai_status_success")
                         st.session_state.last_failed_ai_action = None
-                    except Exception:
-                        st.toast(get_text("ai_action_failed"), icon="❌")
+                    except Exception as e:
+                        error_msg = str(e)
+                        st.toast(f"❌ {error_msg}", icon="❌")
                         set_ai_status("ai_status_failed")
                         st.session_state.last_failed_ai_action = {"name": "generate_titles", "require_text": True}
+                        if ErrorHandler:
+                            ErrorHandler.log_error("ai_titles", e, {"engine": ai_cfg.get('engine'), "model": ai_cfg.get('model')})
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
@@ -3535,6 +3561,11 @@ Right column
 
                         with st.spinner(get_text("expanding_content")):
                             res, msg = run_ai(current_txt, context_text, ai_cfg, task_type="expand", content_type=ai_content_type)
+                            
+                            # Check if AI returned an error message
+                            if msg.startswith("⚠️") or msg.startswith("❌"):
+                                raise Exception(msg)
+                            
                             st.session_state.content = res
                             st.session_state.reset_editor = True  # Trigger editor reset
                             if res:
@@ -3546,10 +3577,22 @@ Right column
                             time.sleep(0.5)
                         set_ai_status("ai_status_success")
                         st.session_state.last_failed_ai_action = None
-                    except Exception:
-                        st.toast(get_text("ai_action_failed"))
+                    except Exception as e:
+                        error_msg = str(e)
+                        st.toast(f"❌ {error_msg}", icon="❌")
                         set_ai_status("ai_status_failed")
                         st.session_state.last_failed_ai_action = {"name": "expand_content", "require_text": True}
+                        # Log detailed error for debugging
+                        if ErrorHandler:
+                            ErrorHandler.log_error("ai_expand", e, {
+                                "engine": ai_cfg.get('engine'), 
+                                "model": ai_cfg.get('model'),
+                                "url": ai_cfg.get('url'),
+                                "content_length": len(current_txt) if current_txt else 0,
+                                "context_length": len(context_text) if context_text else 0
+                            })
+                        # Debug: Show what we tried to send
+                        st.error(f"Debug: Engine={ai_cfg.get('engine')}, Model={ai_cfg.get('model')}, URL={ai_cfg.get('url')}")
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
@@ -3580,6 +3623,11 @@ Right column
                         with st.spinner(get_text("formatting_content")):
                             res, msg = run_ai(current_txt, context_text, ai_cfg, task_type="format", 
                                               content_type=ai_content_type, available_plugins=available_plugins)
+                            
+                            # Check if AI returned an error message
+                            if msg.startswith("⚠️") or msg.startswith("❌"):
+                                raise Exception(msg)
+                            
                             st.session_state.content = res
                             st.session_state.reset_editor = True  # Trigger editor reset
                             if res:
@@ -3591,10 +3639,20 @@ Right column
                             time.sleep(0.5)
                         set_ai_status("ai_status_success")
                         st.session_state.last_failed_ai_action = None
-                    except Exception:
-                        st.toast(get_text("ai_action_failed"))
+                    except Exception as e:
+                        error_msg = str(e)
+                        st.toast(f"❌ {error_msg}", icon="❌")
                         set_ai_status("ai_status_failed")
                         st.session_state.last_failed_ai_action = {"name": "smart_format", "require_text": True}
+                        if ErrorHandler:
+                            ErrorHandler.log_error("ai_format", e, {
+                                "engine": ai_cfg.get('engine'), 
+                                "model": ai_cfg.get('model'),
+                                "url": ai_cfg.get('url'),
+                                "content_length": len(current_txt) if current_txt else 0
+                            })
+                        # Debug: Show what we tried to send
+                        st.error(f"Debug: Engine={ai_cfg.get('engine')}, Model={ai_cfg.get('model')}, URL={ai_cfg.get('url')}")
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
@@ -3679,6 +3737,11 @@ Right column
 
                         with st.spinner(get_text("polishing_content")):
                             res, msg = run_ai(current_txt, context_text, ai_cfg, task_type="polish", content_type=ai_content_type)
+                            
+                            # Check if AI returned an error message
+                            if msg.startswith("⚠️") or msg.startswith("❌"):
+                                raise Exception(msg)
+                            
                             st.session_state.content = res
                             st.session_state.reset_editor = True
                             if res:
@@ -3690,10 +3753,21 @@ Right column
                             time.sleep(0.5)
                         set_ai_status("ai_status_success")
                         st.session_state.last_failed_ai_action = None
-                    except Exception:
-                        st.toast(get_text("ai_action_failed"))
+                    except Exception as e:
+                        error_msg = str(e)
+                        st.toast(f"❌ {error_msg}", icon="❌")
                         set_ai_status("ai_status_failed")
                         st.session_state.last_failed_ai_action = {"name": "polish_with_context", "require_text": True}
+                        if ErrorHandler:
+                            ErrorHandler.log_error("ai_polish", e, {
+                                "engine": ai_cfg.get('engine'), 
+                                "model": ai_cfg.get('model'),
+                                "url": ai_cfg.get('url'),
+                                "content_length": len(current_txt) if current_txt else 0,
+                                "context_length": len(context_text) if context_text else 0
+                            })
+                        # Debug: Show what we tried to send
+                        st.error(f"Debug: Engine={ai_cfg.get('engine')}, Model={ai_cfg.get('model')}, URL={ai_cfg.get('url')}")
                     finally:
                         st.session_state.pending_ai_action = None
                         st.session_state.ai_busy = False
@@ -3745,6 +3819,33 @@ Right column
             if st.button(get_text("generate_titles"), use_container_width=True, disabled=ai_busy or not ai_ready, help=get_text("help_generate_titles")):
                 trigger_ai_action("generate_titles", require_text=True)
             
+            # Display generated titles below button (like components)
+            if "generated_titles" in st.session_state and st.session_state.generated_titles:
+                st.divider()
+                st.subheader(f"📋 {get_text('generate_titles')}")
+                
+                # Show titles in horizontal layout
+                titles = st.session_state.generated_titles
+                title_lines = [line.strip() for line in titles.split('\n') if line.strip()]
+                
+                for idx, title in enumerate(title_lines):
+                    clean_title = re.sub(r'^[\d\.\)\s]+', '', title).strip()
+                    if clean_title:
+                        # Truncate long titles
+                        display_title = clean_title[:30] + "..." if len(clean_title) > 30 else clean_title
+                        
+                        t_col1, t_col2 = st.columns([4, 1])
+                        with t_col1:
+                            st.write(f"**{idx + 1}.** {display_title}")
+                        with t_col2:
+                            if st.button("📋", key=f"copy_title_{idx}", help="Copy"):
+                                st.toast("Copied!", icon="✅")
+                
+                # Clear titles button
+                if st.button(get_text("clear_suggestions").replace("Suggestions", "Titles"), use_container_width=True):
+                    st.session_state.generated_titles = ""
+                    st.rerun()
+            
             if st.button(get_text("expand_content"), use_container_width=True, disabled=ai_busy or not ai_ready, help=get_text("help_expand_content")):
                 trigger_ai_action("expand_content", require_text=True)
         
@@ -3760,67 +3861,68 @@ Right column
             
             # Display stored suggestions with insert buttons (persists across reruns)
             if "component_suggestions" in st.session_state and st.session_state.component_suggestions:
-                st.divider()
-                st.subheader(get_text("suggested_components"))
-                
-                # Build component map with built-in components
-                component_map = {
-                    "hero": "::: hero\n# Title\nSubtitle\n:::",
-                    "col-2": "::: col-2\nLeft content\n--split--\nRight content\n:::",
-                    "col-3": "::: col-3\nOne\n--split--\nTwo\n--split--\nThree\n:::",
-                    "steps": "::: steps\n1. Step One\n2. Step Two\n:::",
-                    "timeline": "::: timeline\n2024 Event\n2025 Event\n:::",
-                    "card": "::: card\n## Card Title\nCard content here.\n:::"
-                }
-                
-                # Add plugin components to the map
-                if get_plugin_registry:
-                    try:
-                        registry = get_plugin_registry()
-                        plugins = registry.get_plugins_by_category()
-                        for plugin in plugins:
-                            if plugin.insertion_tool:
-                                component_map[plugin.name] = plugin.insertion_tool
-                    except:
-                        pass
-                
-                # Show buttons for each suggestion
-                for idx, suggestion in enumerate(st.session_state.component_suggestions):
-                    comp_name = suggestion.get("component", "")
-                    position = suggestion.get("position", "end")
+                with st.container():
+                    st.divider()
+                    st.subheader(get_text("suggested_components"))
                     
-                    if comp_name in component_map:
-                        comp_template = component_map[comp_name]
-                        comp_display_name = comp_name.replace("-", " ").title()
+                    # Build component map with built-in components
+                    component_map = {
+                        "hero": "::: hero\n# Title\nSubtitle\n:::",
+                        "col-2": "::: col-2\nLeft content\n--split--\nRight content\n:::",
+                        "col-3": "::: col-3\nOne\n--split--\nTwo\n--split--\nThree\n:::",
+                        "steps": "::: steps\n1. Step One\n2. Step Two\n:::",
+                        "timeline": "::: timeline\n2024 Event\n2025 Event\n:::",
+                        "card": "::: card\n## Card Title\nCard content here.\n:::"
+                    }
+                    
+                    # Add plugin components to the map
+                    if get_plugin_registry:
+                        try:
+                            registry = get_plugin_registry()
+                            plugins = registry.get_plugins_by_category()
+                            for plugin in plugins:
+                                if plugin.insertion_tool:
+                                    component_map[plugin.name] = plugin.insertion_tool
+                        except:
+                            pass
+                    
+                    # Show buttons for each suggestion
+                    for idx, suggestion in enumerate(st.session_state.component_suggestions):
+                        comp_name = suggestion.get("component", "")
+                        position = suggestion.get("position", "end")
                         
-                        sug_col1, sug_col2 = st.columns([3, 1])
-                        with sug_col1:
-                            st.write(f"**{comp_display_name}** - *{position}*")
-                        with sug_col2:
-                            if st.button("➕", key=f"insert_comp_{idx}", use_container_width=True, help=get_text("insert_component")):
-                                # Get current content
-                                current_content = st.session_state.get("content", "")
-                                
-                                # Insert at the suggested position
-                                new_content = insert_component_at_position(
-                                    current_content, comp_template, position
-                                )
-                                
-                                st.session_state.content = new_content
-                                st.session_state.reset_editor = True
-                                
-                                # Remove this suggestion from the list
-                                st.session_state.component_suggestions.pop(idx)
-                                
-                                inserted_msg = get_text("component_inserted").format(name=comp_display_name, position=position)
-                                st.toast(inserted_msg)
-                                time.sleep(0.3)
-                                st.rerun()
-                
-                # Clear all suggestions button
-                if st.button(get_text("clear_suggestions"), use_container_width=True):
-                    st.session_state.component_suggestions = []
-                    st.rerun()
+                        if comp_name in component_map:
+                            comp_template = component_map[comp_name]
+                            comp_display_name = comp_name.replace("-", " ").title()
+                            
+                            sug_col1, sug_col2 = st.columns([3, 1])
+                            with sug_col1:
+                                st.write(f"**{comp_display_name}** - *{position}*")
+                            with sug_col2:
+                                if st.button("➕", key=f"insert_comp_{idx}", use_container_width=True, help=get_text("insert_component")):
+                                    # Get current content
+                                    current_content = st.session_state.get("content", "")
+                                    
+                                    # Insert at the suggested position
+                                    new_content = insert_component_at_position(
+                                        current_content, comp_template, position
+                                    )
+                                    
+                                    st.session_state.content = new_content
+                                    st.session_state.reset_editor = True
+                                    
+                                    # Remove this suggestion from the list
+                                    st.session_state.component_suggestions.pop(idx)
+                                    
+                                    inserted_msg = get_text("component_inserted").format(name=comp_display_name, position=position)
+                                    st.toast(inserted_msg)
+                                    time.sleep(0.3)
+                                    st.rerun()
+                    
+                    # Clear all suggestions button
+                    if st.button(get_text("clear_suggestions"), use_container_width=True):
+                        st.session_state.component_suggestions = []
+                        st.rerun()
 
         # AI status cue (compact, inline style)
         engine_label = st.session_state.get("ai_cfg", {}).get("engine", "None")
