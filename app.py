@@ -397,6 +397,21 @@ def get_text(key):
     lang = st.session_state.get("ui_language", "en")
     return TRANSLATIONS.get(lang, TRANSLATIONS["en"]).get(key, key)
 
+
+def _get_provider_icon(provider_type: str) -> str:
+    """Get icon for provider type"""
+    icons = {
+        "openai": "🔵",
+        "openrouter": "🟣",
+        "anthropic": "🟠",
+        "gemini": "🟡",
+        "deepseek": "🔴",
+        "ollama": "🟢",
+        "custom": "⚪",
+    }
+    return icons.get(provider_type, "🤖")
+
+
 # Plugin name and description translations
 PLUGIN_TRANSLATIONS = {
     "en": {
@@ -512,11 +527,21 @@ except ImportError:
     def delete_image_from_library(filename): return False
 
 try:
-    from ai_integration import check_connection, run_ai, detect_language
+    from ai_integration import check_connection, run_ai, detect_language, get_provider_config
 except ImportError:
     def check_connection(engine, url, key): return False, "Module not available"
     def run_ai(text, context, config, task_type="polish", content_type=None, available_plugins=None): return None, "Module not available"
     def detect_language(text): return "en"
+    def get_provider_config(provider_id): return {"engine": "None", "url": "", "key": "", "model": ""}
+
+try:
+    from ai_provider_manager import get_manager, init_providers, AIProvider
+    HAS_PROVIDER_MANAGER = True
+except ImportError:
+    HAS_PROVIDER_MANAGER = False
+    def get_manager(): return None
+    def init_providers(): pass
+    def AIProvider(*args, **kwargs): return None
 
 try:
     from content_processing import (
@@ -872,6 +897,56 @@ def main():
     .stTabs [data-baseweb="tab"] button {
         min-height: 36px;
     }
+    /* Prevent button text wrapping */
+    .stButton button {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* CSS Changes from Browser Preview */
+    /* Change 3: width from 48.0156px to fit-content for p */
+    p {
+        width: fit-content;
+    }
+    /* Change 4: width from 72.4062px to fit-content for button */
+    button.st-emotion-cache-6ms01g {
+        width: 100%;
+    }
+    /* Change 7: display from block to flex for stElementContainer (fetch_openai button) */
+    div.stElementContainer.element-container.st-key-fetch_openai {
+        display: flex;
+    }
+    /* Change 8: display from block to flex for p element containing "4 models available" */
+    div.stElementContainer.element-container.st-key-fetch_openai p {
+        display: flex;
+    }
+    /* Sidebar horizontal block fixes for alignment */
+    section.tSidebar .stHorizontalBlock {
+        align-items: center !important;
+        justify-content: flex-start !important;
+    }
+    /* Sidebar vertical block alignment fixes */
+    section.tSidebar .stVerticalBlock {
+        justify-content: flex-end !important;
+        align-items: flex-start !important;
+    }
+    /* Fix button text squeezing in sidebar */
+    section.tSidebar .stHorizontalBlock .stButton button {
+        white-space: normal !important;
+        text-overflow: clip !important;
+        word-wrap: break-word !important;
+        min-height: auto !important;
+        height: auto !important;
+        padding: 0.4rem 0.6rem !important;
+    }
+    /* Fix API Key section alignment */
+    section.tSidebar .stTextInput {
+        margin-top: 0.5rem !important;
+    }
+    /* Ensure proper spacing between sidebar elements */
+    section.tSidebar > div {
+        gap: 0.75rem !important;
+    }
     @media (max-width: 900px) {
         .stAppViewContainer .main .block-container {
             padding-left: var(--mp-gutter-mobile) !important;
@@ -1115,136 +1190,161 @@ def main():
         # 1. AI ASSISTANT (Most important - at the top)
         ai_expanded = st.session_state.sidebar_expanded.get("ai_assistant", not simple_mode)
         with st.expander(f"🤖 {get_text('ai_assistant')}", expanded=ai_expanded):
-            prev_engine = st.session_state.get("last_engine", "None")
-            if "last_engine" not in st.session_state:
-                st.session_state.last_engine = prev_engine
-            other_engines = ["Gemini", "OpenAI", "OpenRouter"]
-            engine_options = ["None", "Ollama (Local)"] + sorted(other_engines)
-            prev_ai_cfg = st.session_state.get("ai_cfg", {"engine": "None", "key": "", "url": "", "model": ""})
-            engine_default_idx = engine_options.index(prev_ai_cfg.get("engine", "None")) if prev_ai_cfg.get("engine", "None") in engine_options else engine_options.index("None")
+            # Initialize providers
+            if HAS_PROVIDER_MANAGER:
+                init_providers()
+                manager = get_manager()
+                providers = manager.get_providers()
+                security_info = manager.get_security_info()
+            else:
+                manager = None
+                providers = []
+                security_info = {"icon": "🔴", "name": "Security", "desc": "Not available", "risk": "N/A"}
 
-            engine = st.selectbox(
-                get_text("ai_engine"), 
-                engine_options,
-                index=engine_default_idx,
-                help=get_text("ai_engine_help"),
-                key="ai_engine_select"
-            )
-            ai_cfg = {
-                "engine": engine,
-                "key": prev_ai_cfg.get("key", ""),
-                "url": prev_ai_cfg.get("url", ""),
-                "model": prev_ai_cfg.get("model", "")
-            }
+            # Security level indicator
+            st.caption(f"{security_info['icon']} {security_info['name']}: {security_info['desc']}")
 
-            # Reset defaults when switching engines
-            if engine != prev_engine:
-                defaults = {
-                    "None": {"url": "", "model": "", "key": ""},
-                    "Ollama (Local)": {"url": "http://localhost:11434/v1", "model": "llama3", "key": ""},
-                    "OpenAI": {"url": "https://api.openai.com/v1", "model": "gpt-4o-mini", "key": ""},
-                    "OpenRouter": {"url": "https://openrouter.ai/api/v1", "model": "openai/gpt-4o-mini", "key": ""},
-                    "Gemini": {"url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-1.5-pro-latest", "key": ""},
-                }
-                if engine in defaults:
-                    ai_cfg.update(defaults[engine])
-                st.session_state.last_engine = engine
+            if not HAS_PROVIDER_MANAGER or not providers:
+                # Fallback to old implementation
+                prev_engine = st.session_state.get("last_engine", "None")
+                other_engines = ["Gemini", "OpenAI", "OpenRouter"]
+                engine_options = ["None", "Ollama (Local)"] + sorted(other_engines)
+                prev_ai_cfg = st.session_state.get("ai_cfg", {"engine": "None", "key": "", "url": "", "model": ""})
+                engine_default_idx = engine_options.index(prev_ai_cfg.get("engine", "None")) if prev_ai_cfg.get("engine", "None") in engine_options else engine_options.index("None")
 
-            # Auto connection check when creds change (lightweight)
-            last_check_payload = st.session_state.get("ai_last_check_payload")
-            current_payload = (engine, ai_cfg.get("url", ""), ai_cfg.get("key", ""))
-            if engine != "None" and current_payload != last_check_payload:
-                if engine == "Ollama (Local)" or ai_cfg.get("key"):
-                    alive, msg = check_connection(engine, ai_cfg.get("url", ""), ai_cfg.get("key", ""))
-                    st.session_state.ai_last_check_payload = current_payload
-                    st.session_state.ai_last_check_status = msg
-                    if alive:
-                        st.caption(f"✅ {msg}")
-                    else:
-                        st.caption(f"⚠️ {msg}")
-            
-            if engine != "None":
-                if engine == "OpenRouter":
-                    ai_cfg["key"] = st.text_input(get_text("api_key"), value=ai_cfg.get("key", ""), type="password", help="Your OpenRouter API key", key="openrouter_api_key")
-                    ai_cfg["url"] = "https://openrouter.ai/api/v1"
-                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "openai/gpt-4o-mini") or "openai/gpt-4o-mini", help="Model name (e.g., openai/gpt-4o-mini)", key="openrouter_model")
+                engine = st.selectbox(get_text("ai_engine"), engine_options, index=engine_default_idx, key="ai_engine_select")
+                ai_cfg = {"engine": engine, "key": prev_ai_cfg.get("key", ""), "url": prev_ai_cfg.get("url", ""), "model": prev_ai_cfg.get("model", "")}
+
+                if engine != "None":
+                    if engine == "OpenRouter":
+                        ai_cfg["key"] = st.text_input(get_text("api_key"), type="password", key="openrouter_api_key")
+                        ai_cfg["url"] = "https://openrouter.ai/api/v1"
+                        ai_cfg["model"] = st.text_input(get_text("model"), value="openai/gpt-4o-mini", key="openrouter_model")
+                    elif engine == "OpenAI":
+                        ai_cfg["key"] = st.text_input(get_text("api_key"), type="password", key="openai_api_key")
+                        ai_cfg["url"] = "https://api.openai.com/v1"
+                        ai_cfg["model"] = st.text_input(get_text("model"), value="gpt-4o-mini", key="openai_model")
+                    elif engine == "Gemini":
+                        ai_cfg["key"] = st.text_input(get_text("api_key"), type="password", key="gemini_api_key")
+                        ai_cfg["url"] = "https://generativelanguage.googleapis.com/v1beta/openai"
+                        ai_cfg["model"] = st.text_input(get_text("model"), value="gemini-1.5-pro-latest", key="gemini_model")
+                    elif engine == "Ollama (Local)":
+                        ai_cfg["url"] = st.text_input("Ollama URL", value="http://localhost:11434/v1", key="ollama_url")
+                        ai_cfg["model"] = st.text_input(get_text("model"), value="llama3", key="ollama_model")
+
                     if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
-                        alive, msg = check_connection(engine, ai_cfg["url"], ai_cfg["key"])
-                        if alive: 
-                            st.success(msg)
-                        else: 
-                            st.error(msg)
-                elif engine == "OpenAI":
-                    ai_cfg["key"] = st.text_input(get_text("api_key"), value=ai_cfg.get("key", ""), type="password", help="Your OpenAI API key", key="openai_api_key")
-                    ai_cfg["url"] = "https://api.openai.com/v1"
-                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "gpt-4o-mini") or "gpt-4o-mini", help="Model name (e.g., gpt-4o-mini)", key="openai_model")
-                    if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
-                        alive, msg = check_connection(engine, ai_cfg["url"], ai_cfg["key"])
-                        if alive:
-                            st.success(msg)
-                        else:
-                            st.error(msg)
-                elif engine == "Gemini":
-                    ai_cfg["key"] = st.text_input(get_text("api_key"), value=ai_cfg.get("key", ""), type="password", help="Your Gemini API key", key="gemini_api_key")
-                    ai_cfg["url"] = "https://generativelanguage.googleapis.com/v1beta/openai"
-                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "gemini-1.5-pro-latest") or "gemini-1.5-pro-latest", help="Model name (e.g., gemini-1.5-pro-latest)", key="gemini_model")
-                    if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
-                        alive, msg = check_connection(engine, ai_cfg["url"], ai_cfg["key"])
-                        if alive:
-                            st.success(msg)
-                        else:
-                            st.error(msg)
-                elif engine == "Ollama (Local)":
-                    ai_cfg["url"] = st.text_input("Ollama URL", ai_cfg.get("url", "http://localhost:11434/v1") or "http://localhost:11434/v1", help="Local Ollama server URL", key="ollama_url")
-                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "llama3") or "llama3", help="Model name (e.g., llama3)", key="ollama_model")
-                    if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
-                        alive, msg = check_connection(engine, ai_cfg["url"], None)
-                        if alive: 
-                            st.success(msg)
-                        else: 
-                            st.error(msg)
-            
-                # Content Type (simplified in simple mode)
-                if not simple_mode:
-                    current_content = st.session_state.get("content", "")
-                    detected_type = detect_content_type(current_content) if current_content else None
-                    
-                    content_type_options = ["Auto-detect", "Product Launch", "Newsletter", "Tutorial", 
-                                           "Marketing", "Internal", "Blog Post", "Announcement"]
-                    default_idx = 0
-                    if detected_type and detected_type in content_type_options:
-                        default_idx = content_type_options.index(detected_type)
-                    
-                    selected_content_type = st.selectbox(
-                        get_text("content_type_label"),
-                        content_type_options,
-                        index=default_idx,
-                        help="Helps AI understand your content better"
-                    )
-                    
-                    if selected_content_type == "Auto-detect":
-                        ai_content_type = detected_type
-                    else:
-                        ai_content_type = selected_content_type if selected_content_type != "Auto-detect" else None
-                    
-                    if detected_type and selected_content_type == "Auto-detect":
-                        st.caption(f"🔍 Detected: {detected_type}")
-                    
-                    # Context (advanced feature)
-                    with st.expander(f"📝 {get_text('context_optional')}", expanded=False):
-                        st.caption(get_text("add_context"))
-                        context_text = st.text_area(get_text("paste_notes"), height=100, help="Meeting notes, requirements, etc.")
-                else:
-                    # Simple mode: auto-detect only
-                    current_content = st.session_state.get("content", "")
-                    ai_content_type = detect_content_type(current_content) if current_content else None
-                    context_text = ""
-                    if ai_content_type:
-                        st.caption(f"🔍 Content type: {ai_content_type}")
-            
-            # Store AI config and content type in session state
-            st.session_state.ai_cfg = ai_cfg
-            st.session_state.ai_content_type = ai_content_type if engine != "None" else None
+                        alive, msg = check_connection(engine, ai_cfg.get("url", ""), ai_cfg.get("key", ""))
+                        st.success(msg) if alive else st.error(msg)
+
+                st.session_state.ai_cfg = ai_cfg
+                st.session_state.ai_content_type = None if engine == "None" else "Auto-detect"
+                st.session_state.context_text = ""
+
+            else:
+                # Cherry Studio-style provider selector
+                provider_options = [(p.id, f"{_get_provider_icon(p.provider_type)} {p.name}") for p in providers]
+                provider_ids = [p[0] for p in provider_options]
+                provider_labels = [p[1] for p in provider_options]
+
+                selected_idx = 0
+                current_id = st.session_state.get("selected_provider_id")
+                if current_id and current_id in provider_ids:
+                    selected_idx = provider_ids.index(current_id)
+
+                selected_provider_id = st.selectbox(
+                    "🤖 Provider",
+                    options=provider_ids,
+                    format_func=lambda x: next((l for i, l in enumerate(provider_labels) if provider_ids[i] == x), x),
+                    index=selected_idx,
+                    key="provider_select"
+                )
+                st.session_state.selected_provider_id = selected_provider_id
+
+                if selected_provider_id:
+                    provider = manager.get_provider(selected_provider_id)
+                    if provider:
+                        # Show connection status
+                        api_key = manager.get_api_key(selected_provider_id)
+                        alive, status_msg = manager.check_connection(provider, api_key)
+                        st.caption(status_msg)
+
+                        # 4 Essential Elements from Cherry Studio:
+                        # 1. Provider Name (shown in selector, read-only)
+                        # 2. API Key
+                        # 3. API Host
+                        # 4. Models
+
+                        # Element 2: API Key
+                        if provider.provider_type != "ollama":
+                            key_col1, key_col2 = st.columns([4, 1])
+                            with key_col1:
+                                current_key = manager.get_api_key(selected_provider_id) or ""
+                                new_key = st.text_input(
+                                    "🔑 API Key",
+                                    value=current_key,
+                                    type="password",
+                                    placeholder="sk-...",
+                                    key=f"apikey_{selected_provider_id}"
+                                )
+                            with key_col2:
+                                if st.button("💾", key=f"savekey_{selected_provider_id}", help="Save key", use_container_width=True):
+                                    if new_key:
+                                        manager.set_api_key(selected_provider_id, new_key)
+                                        st.success("Saved!")
+                                    else:
+                                        manager.storage.delete_key(selected_provider_id)
+                                        st.info("Cleared!")
+
+                        # Element 3: API Host
+                        api_host = st.text_input(
+                            "🌐 API Host",
+                            value=provider.api_host,
+                            placeholder="https://api.openai.com/v1",
+                            key=f"host_{selected_provider_id}"
+                        )
+                        if api_host != provider.api_host:
+                            manager.update_provider(selected_provider_id, api_host=api_host)
+                            st.rerun()
+
+                        # Element 4: Models
+                        model_options = provider.models if provider.models else ["No models configured"]
+                        current_model_idx = 0
+                        if provider.default_model and provider.default_model in model_options:
+                            current_model_idx = model_options.index(provider.default_model)
+
+                        selected_model = st.selectbox(
+                            "📋 Model",
+                            options=model_options,
+                            index=current_model_idx,
+                            key=f"model_{selected_provider_id}"
+                        )
+                        if selected_model != provider.default_model:
+                            manager.update_provider(selected_provider_id, default_model=selected_model)
+
+                        # Fetch models button
+                        col1, col2 = st.columns([4, 1])
+                        with col1:
+                            st.caption(f"{len(provider.models)} models available")
+                        with col2:
+                            if st.button("🔄 Models", use_container_width=True, key=f"fetch_{selected_provider_id}", help="Fetch available models"):
+                                with st.spinner("Fetching..."):
+                                    success, models, msg = manager.fetch_models(provider, api_key)
+                                    if success and models:
+                                        manager.update_provider(selected_provider_id, models=models)
+                                        st.success(msg)
+                                    else:
+                                        st.info(msg)
+
+                        # Test connection button
+                        if st.button("🔌 Test", use_container_width=True, key=f"test_{selected_provider_id}"):
+                            alive, msg = manager.check_connection(provider, api_key)
+                            st.success(msg) if alive else st.error(msg)
+
+                        # Get config for AI calls
+                        config = get_provider_config(selected_provider_id)
+                        st.session_state.ai_cfg = config
+                        st.session_state.ai_content_type = "Auto-detect"
+                        st.session_state.context_text = ""
         
         # 2. FILES & TEMPLATES
         st.divider()
