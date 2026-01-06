@@ -557,7 +557,14 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
             # Return wrapped in section
             return f'<section style="{s["hero"]}">{c}</section>' 
         else:
-            # Web preview class
+            # Web preview mode - also apply center alignment to H1
+            h1_style_raw = s["h1"]
+            h1_centered = h1_style_raw.replace("text-align: left", "text-align: center")
+            if "text-align: center" not in h1_centered:
+                h1_centered += " text-align: center;"
+            
+            # Replace markdown # with styled H1
+            c = re.sub(r'^# (.*)', f'<h1 style="{h1_centered}">\\1</h1>', c, flags=re.MULTILINE)
             return f'<div class="mp-hero">{c}</div>'
             
     text = re.sub(r'(?is):::\s*hero\n(.*?)\n:::', hero_r, text)
