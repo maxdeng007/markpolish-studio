@@ -1,5 +1,6 @@
 import re
 import urllib.parse
+import base64
 import streamlit as st
 import random
 import os
@@ -384,8 +385,110 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
         elif img_provider == "Placeholder (Text)":
             # Simple placeholder with text
             url = f"https://placehold.co/800x450/EEE/31343C?text={encoded}"
+        elif img_provider.startswith("Gradient"):
+            # Beautiful CSS gradient images using inline SVG - compact and layout-friendly
+            # These create modern, attractive gradient images without breaking layout
+            gradient_styles = {
+                "Gradient (Blue)": {
+                    "gradient": '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#667eea;stop-opacity:1" /><stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" /></linearGradient>',
+                    "emoji": "💙"
+                },
+                "Gradient (Purple)": {
+                    "gradient": '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" /><stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" /></linearGradient>',
+                    "emoji": "💜"
+                },
+                "Gradient (Sunset)": {
+                    "gradient": '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#fa709a;stop-opacity:1" /><stop offset="100%" style="stop-color:#fee140;stop-opacity:1" /></linearGradient>',
+                    "emoji": "🌅"
+                },
+                "Gradient (Ocean)": {
+                    "gradient": '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" /><stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" /></linearGradient>',
+                    "emoji": "🌊"
+                },
+                "Gradient (Forest)": {
+                    "gradient": '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#11998e;stop-opacity:1" /><stop offset="100%" style="stop-color:#38ef7d;stop-opacity:1" /></linearGradient>',
+                    "emoji": "🌲"
+                },
+                "Gradient (Aurora)": {
+                    "gradient": '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#a18cd1;stop-opacity:1" /><stop offset="100%" style="stop-color:#fbc2eb;stop-opacity:1" /></linearGradient>',
+                    "emoji": "✨"
+                },
+                "Gradient (Fire)": {
+                    "gradient": '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f83600;stop-opacity:1" /><stop offset="100%" style="stop-color:#f9d423;stop-opacity:1" /></linearGradient>',
+                    "emoji": "🔥"
+                },
+                "Gradient (Midnight)": {
+                    "gradient": '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#2c3e50;stop-opacity:1" /><stop offset="100%" style="stop-color:#4ca1af;stop-opacity:1" /></linearGradient>',
+                    "emoji": "🌙"
+                }
+            }
+            
+            # Get gradient style or use default
+            gradient_info = gradient_styles.get(img_provider, gradient_styles["Gradient (Blue)"])
+            gradient_svg = gradient_info["gradient"]
+            emoji = gradient_info.get("emoji", "🎨")
+            
+            # Clean prompt for text display
+            display_text = prompt.strip() if prompt.strip() else "Gradient"
+            
+            # Create compact SVG image with gradient and text
+            # Using data URI to embed SVG directly
+            text_encoded = urllib.parse.quote(display_text)
+            emoji_encoded = urllib.parse.quote(emoji)
+            
+            # Build SVG with gradient background (800x450 to match placeholder ratio)
+            svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <defs>{gradient_svg}</defs>
+  <rect width="800" height="450" fill="url(#grad1)"/>
+  <text x="400" y="225" font-family="Arial, sans-serif" font-size="36" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold">{emoji} {display_text}</text>
+</svg>'''
+            
+            # Convert to data URI
+            svg_base64 = base64.b64encode(svg_content.encode('utf-8')).decode('utf-8')
+            url = f"data:image/svg+xml;base64,{svg_base64}"
+            
+            return f'\n<img src="{url}" {img_s} alt="{display_text}" style="border-radius: 8px;">\n'
+        elif img_provider.startswith("Pattern"):
+            # Real pattern backgrounds using inline SVG patterns
+            # Create proper dot and line patterns
+            if "Dots" in img_provider:
+                # Polka dots pattern
+                pattern_svg = '''<defs>
+    <pattern id="dotPattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="8" fill="rgba(255,255,255,0.25)"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="450" fill="#607d8b"/>
+  <rect width="800" height="450" fill="url(#dotPattern)"/>'''
+                emoji = "🔵"
+            else:
+                # Diagonal lines pattern
+                pattern_svg = '''<defs>
+    <pattern id="linePattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="20" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="450" fill="#78909c"/>
+  <rect width="800" height="450" fill="url(#linePattern)"/>'''
+                emoji = "📐"
+            
+            # Clean prompt for text display
+            display_text = prompt.strip() if prompt.strip() else "Pattern"
+            
+            # Build SVG with pattern background (800x450 to match placeholder ratio)
+            svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  {pattern_svg}
+  <text x="400" y="225" font-family="Arial, sans-serif" font-size="36" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold">{emoji} {display_text}</text>
+</svg>'''
+            
+            # Convert to data URI
+            svg_base64 = base64.b64encode(svg_content.encode('utf-8')).decode('utf-8')
+            url = f"data:image/svg+xml;base64,{svg_base64}"
+            
+            return f'\n<img src="{url}" {img_s} alt="{display_text}" style="border-radius: 8px;">\n'
         else:
             # Pollinations AI (Default)
+            # URL format: https://image.pollinations.ai/prompt/{encoded}?width=800&height=450&nologo=true&seed={seed}
             url = f"https://image.pollinations.ai/prompt/{encoded}?width=800&height=450&nologo=true&seed={seed}"
             
         return f'\n<img src="{url}" {img_s} alt="AI Generated">\n'
