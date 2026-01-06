@@ -4188,7 +4188,7 @@ Right column
         
         /* Hero Component */
         .mp-hero{{background:{card_bg};padding:35px 20px;text-align:center;border-radius:{radius};margin:0 0 25px 0;box-shadow:{shadow};box-sizing:border-box;}}
-        .mp-hero h1{{text-align:center;margin-top:0;}}
+        .mp-hero h1{{text-align:center !important;margin-top:0 !important;}}
         
         /* Card Component */
         .mp-card{{background:{card_bg};border-left:4px solid {primary};padding:15px;margin:20px 0;border-radius:{radius};box-shadow:{shadow};box-sizing:border-box;}}
@@ -4299,6 +4299,7 @@ Right column
                         .mp-fallback h1 {{color: {primary}; font-size: 24px; font-weight: bold;}}
                         .mp-fallback h2 {{color: {primary}; font-size: 18px; font-weight: bold;}}
                         .mp-fallback .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center; border-radius: {radius};}}
+                        .mp-fallback .mp-hero h1 {{text-align: center !important;}}
                         .mp-fallback .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius};}}
                         .mp-fallback .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap;}}
                         .mp-fallback .mp-col {{flex: 1; background: {card_bg}; padding: 10px; border-radius: {radius};}}
