@@ -123,7 +123,7 @@ TRANSLATIONS = {
         "plugin_components_hint": "💡 Plugin components appear in 'Add Components' section above - just click to use!",
         "reload_plugins_help": "Reload plugins after creating new ones",
         "view_plugin_guide_help": "View plugin creation guide",
-        "image_source_help": "Default source for [IMG: prompt] tags",
+        "image_source_help": "Default source for [IMG: prompt] tags. Pollinations AI is currently upgrading. Use Picsum or Placeholder options while waiting.",
         "file_upload_limit": "Limit 200MB per file • PNG, JPG, JPEG, GIF",
         "preview_cached": "💡 Preview cached for performance ⚡ (cached)",
         "images_in_library": "{count} image(s) in library",
@@ -198,6 +198,47 @@ TRANSLATIONS = {
         "download_word": "📥 Download Word",
         "force_save": "💾 Force Save Now",
         "force_save_help": "Autosave runs automatically; use Force Save for manual backup.",
+        # New AI Provider UI translations
+        "provider": "Provider",
+        "api_host": "API Host",
+        "fetch_models": "Fetch Models",
+        "models_available": "{count} models available",
+        "fetching": "Fetching...",
+        "test_connection": "Test",
+        # Toast messages
+        "toast_saved": "Saved!",
+        "toast_no_content_to_save": "No content to save",
+        "toast_enter_file_name": "Please enter a file name",
+        "toast_version_restored": "Version restored!",
+        "toast_restore_failed": "Failed to restore version",
+        "toast_version_history_cleared": "Version history cleared",
+        "toast_no_version_history": "No version history available for this file.",
+        "toast_components_unavailable": "Components not available",
+        "toast_reloaded": "Reloaded!",
+        "toast_plugin_error": "Plugin error: {error}",
+        "toast_pollinations_online": "Pollinations AI is back online! Try generating images.",
+        "toast_pollinations_upgrade": "Pollinations AI is still showing upgrade message.",
+        "toast_pollinations_not_responding": "Pollinations AI is not responding.",
+        "toast_pollinations_down": "Cannot connect to Pollinations AI. Service may be down.",
+        "toast_online": "Online",
+        "toast_checking": "Checking... (Click button to test)",
+        "toast_expand_applied": "{msg} - Expanded content applied to editor!",
+        "toast_format_applied": "{msg}",
+        "toast_large_preview": "Preview is large (~{size_kb} KB). Click to render on demand.",
+        "toast_template_loaded": "Loaded template: {label}",
+        "toast_word_generated": "Word document generated!",
+        "toast_word_install_hint": "Word: `pip install python-docx`",
+        "toast_pdf_install_hint": "PDF: `pip install reportlab`",
+        "toast_pdf_failed": "PDF failed: {status} / 请重试",
+        "toast_word_failed": "Word failed: {status} / 请重试",
+        "toast_no_plugins": "🚀 No plugins yet",
+        "toast_file_loaded": "✅ Loaded {file_name}",
+        "toast_file_deleted": "✅ Deleted {file_name}",
+        "toast_delete_failed": "Failed to delete: {error}",
+        "toast_template_not_found": "Template '{template}' not found. Available: {count} templates",
+        "toast_deleted": "Deleted",
+        "toast_auto_saved": "Auto-saved!",
+        "toast_pdf_generated": "PDF generated! Click download to save.",
     },
     "zh": {
         "app_title": "MarkPolish V1.0",
@@ -314,7 +355,7 @@ TRANSLATIONS = {
         "plugin_components_hint": "💡 插件组件出现在上方的「添加组件」部分 - 只需点击即可使用！",
         "reload_plugins_help": "创建新插件后重新加载",
         "view_plugin_guide_help": "查看插件创建指南",
-        "image_source_help": "[IMG: prompt] 标签的默认来源",
+        "image_source_help": "[IMG: prompt] 标签的默认来源。Pollinations AI 正在升级中，等待期间请使用 Picsum 或占位符选项。",
         "file_upload_limit": "每个文件限制 200MB • PNG, JPG, JPEG, GIF",
         "preview_cached": "💡 预览已缓存以提升性能 ⚡（已缓存）",
         "images_in_library": "{count} 张图片在图库",
@@ -389,6 +430,47 @@ TRANSLATIONS = {
         "download_word": "📥 下载 Word",
         "force_save": "💾 立即强制保存",
         "force_save_help": "已自动保存，需手动备份时可点击强制保存。",
+        # New AI Provider UI translations
+        "provider": "提供商",
+        "api_host": "API 主机",
+        "fetch_models": "获取模型",
+        "models_available": "{count} 个模型可用",
+        "fetching": "正在获取...",
+        "test_connection": "测试",
+        # Toast messages
+        "toast_saved": "已保存！",
+        "toast_no_content_to_save": "没有内容可保存",
+        "toast_enter_file_name": "请输入文件名",
+        "toast_version_restored": "版本已恢复！",
+        "toast_restore_failed": "恢复版本失败",
+        "toast_version_history_cleared": "版本历史已清除",
+        "toast_no_version_history": "此文件没有版本历史。",
+        "toast_components_unavailable": "组件不可用",
+        "toast_reloaded": "已重新加载！",
+        "toast_plugin_error": "插件错误：{error}",
+        "toast_pollinations_online": "✅ Pollinations AI 已恢复上线！请尝试生成图片。",
+        "toast_pollinations_upgrade": "⚠️ Pollinations AI 仍在显示升级消息。",
+        "toast_pollinations_not_responding": "❌ Pollinations AI 无响应。",
+        "toast_pollinations_down": "❌ 无法连接 Pollinations AI，服务可能已下线。",
+        "toast_online": "在线",
+        "toast_checking": "检查中...（点击按钮测试）",
+        "toast_expand_applied": "{msg} - 扩展内容已应用到编辑器！",
+        "toast_format_applied": "{msg}",
+        "toast_large_preview": "预览较大（约 {size_kb} KB）。点击按需渲染。",
+        "toast_template_loaded": "已加载模板：{label}",
+        "toast_word_generated": "Word 文档已生成！",
+        "toast_word_install_hint": "💡 Word：请运行 `pip install python-docx`",
+        "toast_pdf_install_hint": "💡 PDF：请运行 `pip install reportlab`",
+        "toast_pdf_failed": "PDF 失败：{status} / 请重试",
+        "toast_word_failed": "Word 失败：{status} / 请重试",
+        "toast_no_plugins": "🚀 暂无插件",
+        "toast_file_loaded": "✅ 已加载 {file_name}",
+        "toast_file_deleted": "✅ 已删除 {file_name}",
+        "toast_delete_failed": "删除失败：{error}",
+        "toast_template_not_found": "模板 '{template}' 未找到。可用模板：{count} 个",
+        "toast_deleted": "已删除",
+        "toast_auto_saved": "自动保存！",
+        "toast_pdf_generated": "PDF 已生成！点击下载保存。",
     }
 }
 
@@ -396,6 +478,21 @@ def get_text(key):
     """Get translated text based on current language setting"""
     lang = st.session_state.get("ui_language", "en")
     return TRANSLATIONS.get(lang, TRANSLATIONS["en"]).get(key, key)
+
+
+def _get_provider_icon(provider_type: str) -> str:
+    """Get icon for provider type"""
+    icons = {
+        "openai": "🔵",
+        "openrouter": "🟣",
+        "anthropic": "🟠",
+        "gemini": "🟡",
+        "deepseek": "🔴",
+        "ollama": "🟢",
+        "custom": "⚪",
+    }
+    return icons.get(provider_type, "🤖")
+
 
 # Plugin name and description translations
 PLUGIN_TRANSLATIONS = {
@@ -512,11 +609,21 @@ except ImportError:
     def delete_image_from_library(filename): return False
 
 try:
-    from ai_integration import check_connection, run_ai, detect_language
+    from ai_integration import check_connection, run_ai, detect_language, get_provider_config
 except ImportError:
     def check_connection(engine, url, key): return False, "Module not available"
     def run_ai(text, context, config, task_type="polish", content_type=None, available_plugins=None): return None, "Module not available"
     def detect_language(text): return "en"
+    def get_provider_config(provider_id): return {"engine": "None", "url": "", "key": "", "model": ""}
+
+try:
+    from ai_provider_manager import get_manager, init_providers, AIProvider
+    HAS_PROVIDER_MANAGER = True
+except ImportError:
+    HAS_PROVIDER_MANAGER = False
+    def get_manager(): return None
+    def init_providers(): pass
+    def AIProvider(*args, **kwargs): return None
 
 try:
     from content_processing import (
@@ -743,6 +850,87 @@ if 'TEMPLATES' not in globals() or not TEMPLATES:
 #      ai_integration.py, content_processing.py, pdf_generator.py
 
 def main():
+    # IMMEDIATELY inject JavaScript to remove help tooltips (runs before any UI renders)
+    early_help_remover = """
+    <script>
+    // Run as early as possible - using document.startViewTransition or immediate execution
+    (function() {
+        var attempts = 0;
+        var maxAttempts = 5000;
+        var lastCount = 0;
+        
+        function isHelpElement(el) {
+            var text = (el.textContent || '').trim();
+            var className = el.className || '';
+            
+            // Check data-testid
+            if (el.getAttribute && el.getAttribute('data-testid') === 'stHelp') return true;
+            
+            // Check class names
+            if (typeof className === 'string') {
+                if (className.includes('stHelp') || 
+                    className.includes('1t7d4j1') || 
+                    className.includes('e1rz36mz4')) {
+                    return true;
+                }
+            }
+            
+            // Check for DeltaGenerator text patterns
+            if (text.length > 30 && (
+                text.includes('DeltaGenerator') || 
+                text.includes('LockedCursor') ||
+                text.includes('_root_container'))) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function removeAllHelpElements() {
+            var allElements = document.querySelectorAll('*');
+            var removed = 0;
+            
+            for (var i = 0; i < allElements.length; i++) {
+                var el = allElements[i];
+                if (isHelpElement(el) && el.parentNode) {
+                    try { 
+                        el.parentNode.removeChild(el); 
+                        removed++;
+                    } catch(e) {}
+                }
+            }
+            
+            return removed;
+        }
+        
+        function continuousRemove() {
+            var count = removeAllHelpElements();
+            attempts++;
+            
+            // Continue for a long time or until we've checked many times with no changes
+            if (attempts < maxAttempts) {
+                if (count === 0 && attempts > 100) {
+                    // Slow down after initial cleanup
+                    setTimeout(continuousRemove, 100);
+                } else {
+                    requestAnimationFrame(continuousRemove);
+                }
+            }
+        }
+        
+        // Start immediately
+        continuousRemove();
+        
+        // Watch for any DOM changes forever
+        var observer = new MutationObserver(function() { 
+            removeAllHelpElements(); 
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    })();
+    </script>
+    """
+    st.markdown(early_help_remover, unsafe_allow_html=True)
+    
     query_params = st.query_params
     
     # Helper: enforce only one sidebar expander open (or all closed)
@@ -841,6 +1029,31 @@ def main():
         --mp-gutter: 0.75rem;
         --mp-gutter-mobile: 0.5rem;
     }
+    /* Hide empty component containers with 0 height */
+    div.stElementContainer.element-container[height="0px"],
+    div.stElementContainer.element-container[data-stale="false"][height="0px"],
+    .stElementContainer.element-container[style*="height: 0px"],
+    .stElementContainer.element-container[style*="height:0px"] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+    /* Also hide any component wrapper with 0 height */
+    div[data-testid="stElementContainer"][height="0px"],
+    div[data-testid="stElementContainer"][style*="height: 0px"] {
+        display: none !important;
+    }
+    /* Set gap to 0 for main content blocks */
+    .st-emotion-cache-tn0cau {
+        gap: 0 !important;
+    }
+    /* Responsive padding for larger screens */
+    @media (min-width: calc(736px + 8rem)) {
+        .st-emotion-cache-zy6yx3 {
+            padding-left: 3rem !important;
+            padding-right: 3rem !important;
+        }
+    }
     /* Reduce Streamlit default side padding and prevent max-width from shrinking content */
     .stAppViewContainer .main .block-container {
         padding-left: var(--mp-gutter) !important;
@@ -872,6 +1085,180 @@ def main():
     .stTabs [data-baseweb="tab"] button {
         min-height: 36px;
     }
+    /* Prevent button text wrapping - but allow in narrow containers */
+    .stButton button {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* Allow text wrapping for buttons in narrow sidebar containers */
+    section.tSidebar .stButton button {
+        white-space: normal !important;
+        text-overflow: clip !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    /* Ensure proper height for button containers in sidebar */
+    section.tSidebar .stVerticalBlock .stButton {
+        min-height: 44px;
+    }
+    /* CSS Changes from Browser Preview */
+    /* Change 3: width from 48.0156px to fit-content for p */
+    p {
+        width: fit-content;
+    }
+    /* Change 4: width from 72.4062px to fit-content for button */
+    button.st-emotion-cache-6ms01g {
+        width: 100%;
+    }
+    /* Change 7: display from block to flex for stElementContainer (fetch_openai button) */
+    div.stElementContainer.element-container.st-key-fetch_openai {
+        display: flex;
+    }
+    /* Change 8: display from block to flex for p element containing "4 models available" */
+    div.stElementContainer.element-container.st-key-fetch_openai p {
+        display: flex;
+    }
+    /* Change 9: stVerticalBlock justify-content from start to flex-start */
+    .stVerticalBlock.st-emotion-cache-wfksaw.e196pkbe2 {
+        justify-content: flex-start !important;
+    }
+    /* Change 10: stVerticalBlock align-items from stretch to flex-start */
+    .stVerticalBlock.st-emotion-cache-wfksaw.e196pkbe2 {
+        align-items: flex-start !important;
+    }
+    /* Change 11: stColumn display from block to flex */
+    .stColumn.st-emotion-cache-139jccg.e196pkbe1 {
+        display: flex !important;
+    }
+    /* Change 12: stColumn flex-direction from row to column */
+    .stColumn.st-emotion-cache-139jccg.e196pkbe1 {
+        flex-direction: column !important;
+    }
+    /* Change 13: stColumn justify-content from normal to flex-start */
+    .stColumn.st-emotion-cache-139jccg.e196pkbe1 {
+        justify-content: flex-start !important;
+    }
+    /* Change 14: stColumn align-items from normal to flex-start */
+    .stColumn.st-emotion-cache-139jccg.e196pkbe1 {
+        align-items: flex-start !important;
+    }
+    /* Sidebar horizontal block fixes for alignment */
+    section.tSidebar .stHorizontalBlock {
+        align-items: center !important;
+        justify-content: flex-start !important;
+    }
+    /* Sidebar vertical block alignment fixes */
+    section.tSidebar .stVerticalBlock {
+        justify-content: flex-end !important;
+        align-items: flex-start !important;
+    }
+    
+    /* Force main content columns to align top - most specific rule */
+    section.main .stVerticalBlock > div[data-testid="stColumn"] {
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        vertical-align: top !important;
+    }
+    
+    /* Also target the column wrappers directly */
+    .stColumn {
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+    }
+    
+    /* Force all column wrappers in main content to align top */
+    section.main div[data-testid="stColumn"] {
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        vertical-align: top !important;
+    }
+    /* Fix button text squeezing in sidebar */
+    section.tSidebar .stHorizontalBlock .stButton button {
+        white-space: normal !important;
+        text-overflow: clip !important;
+        word-wrap: break-word !important;
+        min-height: auto !important;
+        height: auto !important;
+        padding: 0.4rem 0.6rem !important;
+    }
+    /* Fix API Key section alignment */
+    section.tSidebar .stTextInput {
+        margin-top: 0.5rem !important;
+    }
+    /* Ensure proper spacing between sidebar elements */
+    section.tSidebar > div {
+        gap: 0.75rem !important;
+    }
+    /* Hide technical help tooltips (DeltaGenerator, internal docs) - MORE AGGRESSIVE */
+    section.tSidebar [data-testid="stHelp"],
+    section.tSidebar [data-testid="stHelpDoc"],
+    section.tSidebar .stHelp,
+    section.tSidebar .stTooltipIcon,
+    section.tSidebar span.stHelp,
+    section.tSidebar [class*="st-emotion-cache-1t7d4j1"],
+    section.tSidebar [class*="st-emotion-cache-pwll7a"],
+    section.tSidebar [class*="st-emotion-cache-13dqw1y"],
+    section.tSidebar [class*="st-emotion-cache-e1rz36mz4"],
+    section.tSidebar [class*="e1rz36mz4"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+        z-index: -9999 !important;
+    }
+    
+    /* Force column alignment to top using JavaScript MutationObserver */
+    <script>
+    (function() {
+        // Function to enforce column alignment
+        function enforceColumnAlignment() {
+            // Target all columns in the main content area
+            var columns = document.querySelectorAll('section.main div[data-testid="stColumn"]');
+            columns.forEach(function(col) {
+                col.style.alignItems = 'flex-start';
+                col.style.justifyContent = 'flex-start';
+                col.style.verticalAlign = 'top';
+            });
+            
+            // Also target stColumn class elements
+            var stColumns = document.querySelectorAll('.stColumn');
+            stColumns.forEach(function(col) {
+                col.style.alignItems = 'flex-start';
+                col.style.justifyContent = 'flex-start';
+            });
+        }
+        
+        // Run immediately
+        enforceColumnAlignment();
+        
+        // Run continuously to catch any changes
+        setInterval(enforceColumnAlignment, 100); // Every 100ms
+        
+        // Also use MutationObserver to catch DOM changes
+        if (typeof MutationObserver !== 'undefined') {
+            var observer = new MutationObserver(function(mutations) {
+                enforceColumnAlignment();
+            });
+            
+            var mainSection = document.querySelector('section.main');
+            if (mainSection) {
+                observer.observe(mainSection, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                });
+            }
+        }
+    })();
+    </script>
     @media (max-width: 900px) {
         .stAppViewContainer .main .block-container {
             padding-left: var(--mp-gutter-mobile) !important;
@@ -1069,7 +1456,109 @@ def main():
     </script>
     """
     st.components.v1.html(expander_tracker_html, height=0)
-    
+
+    # Inject JavaScript to remove help tooltips (DeltaGenerator, etc.)
+    # Using st.markdown to run in main page context (not iframe)
+    help_remover_script = """
+    <script>
+    // Immediately run when script loads
+    (function() {
+        var removedCount = 0;
+        
+        function removeAllHelpElements() {
+            var sidebar = document.querySelector('section[data-testid="stSidebar"]');
+            if (!sidebar) return;
+            
+            // Find ALL elements that might be help tooltips
+            var allElements = sidebar.querySelectorAll('*');
+            for (var i = 0; i < allElements.length; i++) {
+                var el = allElements[i];
+                var text = (el.textContent || '').trim();
+                var className = el.className || '';
+                
+                // Check if element has help-related classes or data-testid
+                var isHelpElement = false;
+                if (el.getAttribute && el.getAttribute('data-testid') === 'stHelp') isHelpElement = true;
+                if (typeof className === 'string') {
+                    if (className.includes('stHelp') || 
+                        className.includes('1t7d4j1') || 
+                        className.includes('e1rz36mz4')) {
+                        isHelpElement = true;
+                    }
+                }
+                
+                // Also check for DeltaGenerator text (long technical text)
+                if (text.length > 50 && (text.includes('DeltaGenerator') || text.includes('LockedCursor'))) {
+                    isHelpElement = true;
+                }
+                
+                if (isHelpElement && el.parentNode) {
+                    try {
+                        el.parentNode.removeChild(el);
+                        removedCount++;
+                    } catch(e) {}
+                }
+            }
+        }
+        
+        // Run immediately
+        removeAllHelpElements();
+        
+        // Keep running continuously
+        setInterval(function() {
+            removeAllHelpElements();
+        }, 10);  // Every 10ms
+        
+        // Also watch for DOM changes
+        var observer = new MutationObserver(function(mutations) {
+            removeAllHelpElements();
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        // Persist forever - runs every 5ms
+        setInterval(removeAllHelpElements, 5);
+    })();
+    </script>
+    """
+    # Add a third persistent layer that runs FOREVER
+    persistent_help_remover = """
+    <script>
+    (function() {
+        function isHelpElement(el) {
+            var text = (el.textContent || '').trim();
+            var className = el.className || '';
+            
+            if (el.getAttribute && el.getAttribute('data-testid') === 'stHelp') return true;
+            if (typeof className === 'string') {
+                if (className.includes('stHelp') || 
+                    className.includes('1t7d4j1') || 
+                    className.includes('e1rz36mz4')) {
+                    return true;
+                }
+            }
+            if (text.length > 30 && (text.includes('DeltaGenerator') || text.includes('LockedCursor'))) {
+                return true;
+            }
+            return false;
+        }
+        
+        function removeAll() {
+            var all = document.querySelectorAll('*');
+            for (var i = 0; i < all.length; i++) {
+                if (isHelpElement(all[i]) && all[i].parentNode) {
+                    try { all[i].parentNode.removeChild(all[i]); } catch(e) {}
+                }
+            }
+        }
+        
+        // Run forever
+        setInterval(removeAll, 1); // Every 1ms
+    })();
+    </script>
+    """
+    st.markdown(persistent_help_remover, unsafe_allow_html=True)
+
     with st.sidebar:
         st.title(get_text("app_title"))
         st.caption(get_text("app_subtitle"))
@@ -1115,136 +1604,173 @@ def main():
         # 1. AI ASSISTANT (Most important - at the top)
         ai_expanded = st.session_state.sidebar_expanded.get("ai_assistant", not simple_mode)
         with st.expander(f"🤖 {get_text('ai_assistant')}", expanded=ai_expanded):
-            prev_engine = st.session_state.get("last_engine", "None")
-            if "last_engine" not in st.session_state:
-                st.session_state.last_engine = prev_engine
-            other_engines = ["Gemini", "OpenAI", "OpenRouter"]
-            engine_options = ["None", "Ollama (Local)"] + sorted(other_engines)
-            prev_ai_cfg = st.session_state.get("ai_cfg", {"engine": "None", "key": "", "url": "", "model": ""})
-            engine_default_idx = engine_options.index(prev_ai_cfg.get("engine", "None")) if prev_ai_cfg.get("engine", "None") in engine_options else engine_options.index("None")
+            # Initialize providers
+            if HAS_PROVIDER_MANAGER:
+                init_providers()
+                manager = get_manager()
+                providers = manager.get_providers()
+                security_info = manager.get_security_info()
+            else:
+                manager = None
+                providers = []
+                security_info = {"icon": "🔴", "name": "Security", "desc": "Not available", "risk": "N/A"}
 
-            engine = st.selectbox(
-                get_text("ai_engine"), 
-                engine_options,
-                index=engine_default_idx,
-                help=get_text("ai_engine_help"),
-                key="ai_engine_select"
-            )
-            ai_cfg = {
-                "engine": engine,
-                "key": prev_ai_cfg.get("key", ""),
-                "url": prev_ai_cfg.get("url", ""),
-                "model": prev_ai_cfg.get("model", "")
-            }
+            # Security level indicator
+            st.caption(f"{security_info['icon']} {security_info['name']}: {security_info['desc']}")
 
-            # Reset defaults when switching engines
-            if engine != prev_engine:
-                defaults = {
-                    "None": {"url": "", "model": "", "key": ""},
-                    "Ollama (Local)": {"url": "http://localhost:11434/v1", "model": "llama3", "key": ""},
-                    "OpenAI": {"url": "https://api.openai.com/v1", "model": "gpt-4o-mini", "key": ""},
-                    "OpenRouter": {"url": "https://openrouter.ai/api/v1", "model": "openai/gpt-4o-mini", "key": ""},
-                    "Gemini": {"url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-1.5-pro-latest", "key": ""},
-                }
-                if engine in defaults:
-                    ai_cfg.update(defaults[engine])
-                st.session_state.last_engine = engine
+            if not HAS_PROVIDER_MANAGER or not providers:
+                # Fallback to old implementation
+                prev_engine = st.session_state.get("last_engine", "None")
+                other_engines = ["Gemini", "OpenAI", "OpenRouter"]
+                engine_options = ["None", "Ollama (Local)"] + sorted(other_engines)
+                prev_ai_cfg = st.session_state.get("ai_cfg", {"engine": "None", "key": "", "url": "", "model": ""})
+                engine_default_idx = engine_options.index(prev_ai_cfg.get("engine", "None")) if prev_ai_cfg.get("engine", "None") in engine_options else engine_options.index("None")
 
-            # Auto connection check when creds change (lightweight)
-            last_check_payload = st.session_state.get("ai_last_check_payload")
-            current_payload = (engine, ai_cfg.get("url", ""), ai_cfg.get("key", ""))
-            if engine != "None" and current_payload != last_check_payload:
-                if engine == "Ollama (Local)" or ai_cfg.get("key"):
-                    alive, msg = check_connection(engine, ai_cfg.get("url", ""), ai_cfg.get("key", ""))
-                    st.session_state.ai_last_check_payload = current_payload
-                    st.session_state.ai_last_check_status = msg
-                    if alive:
-                        st.caption(f"✅ {msg}")
-                    else:
-                        st.caption(f"⚠️ {msg}")
-            
-            if engine != "None":
-                if engine == "OpenRouter":
-                    ai_cfg["key"] = st.text_input(get_text("api_key"), value=ai_cfg.get("key", ""), type="password", help="Your OpenRouter API key", key="openrouter_api_key")
-                    ai_cfg["url"] = "https://openrouter.ai/api/v1"
-                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "openai/gpt-4o-mini") or "openai/gpt-4o-mini", help="Model name (e.g., openai/gpt-4o-mini)", key="openrouter_model")
+                engine = st.selectbox(get_text("ai_engine"), engine_options, index=engine_default_idx, key="ai_engine_select")
+                ai_cfg = {"engine": engine, "key": prev_ai_cfg.get("key", ""), "url": prev_ai_cfg.get("url", ""), "model": prev_ai_cfg.get("model", "")}
+
+                if engine != "None":
+                    if engine == "OpenRouter":
+                        ai_cfg["key"] = st.text_input(get_text("api_key"), type="password", key="openrouter_api_key")
+                        ai_cfg["url"] = "https://openrouter.ai/api/v1"
+                        ai_cfg["model"] = st.text_input(get_text("model"), value="openai/gpt-4o-mini", key="openrouter_model")
+                    elif engine == "OpenAI":
+                        ai_cfg["key"] = st.text_input(get_text("api_key"), type="password", key="openai_api_key")
+                        ai_cfg["url"] = "https://api.openai.com/v1"
+                        ai_cfg["model"] = st.text_input(get_text("model"), value="gpt-4o-mini", key="openai_model")
+                    elif engine == "Gemini":
+                        ai_cfg["key"] = st.text_input(get_text("api_key"), type="password", key="gemini_api_key")
+                        ai_cfg["url"] = "https://generativelanguage.googleapis.com/v1beta/openai"
+                        ai_cfg["model"] = st.text_input(get_text("model"), value="gemini-1.5-pro-latest", key="gemini_model")
+                    elif engine == "Ollama (Local)":
+                        ai_cfg["url"] = st.text_input("Ollama URL", value="http://localhost:11434/v1", key="ollama_url")
+                        ai_cfg["model"] = st.text_input(get_text("model"), value="llama3", key="ollama_model")
+
                     if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
-                        alive, msg = check_connection(engine, ai_cfg["url"], ai_cfg["key"])
-                        if alive: 
-                            st.success(msg)
-                        else: 
-                            st.error(msg)
-                elif engine == "OpenAI":
-                    ai_cfg["key"] = st.text_input(get_text("api_key"), value=ai_cfg.get("key", ""), type="password", help="Your OpenAI API key", key="openai_api_key")
-                    ai_cfg["url"] = "https://api.openai.com/v1"
-                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "gpt-4o-mini") or "gpt-4o-mini", help="Model name (e.g., gpt-4o-mini)", key="openai_model")
-                    if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
-                        alive, msg = check_connection(engine, ai_cfg["url"], ai_cfg["key"])
+                        alive, msg = check_connection(engine, ai_cfg.get("url", ""), ai_cfg.get("key", ""))
                         if alive:
-                            st.success(msg)
+                            st.toast(msg, icon="✅")
                         else:
-                            st.error(msg)
-                elif engine == "Gemini":
-                    ai_cfg["key"] = st.text_input(get_text("api_key"), value=ai_cfg.get("key", ""), type="password", help="Your Gemini API key", key="gemini_api_key")
-                    ai_cfg["url"] = "https://generativelanguage.googleapis.com/v1beta/openai"
-                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "gemini-1.5-pro-latest") or "gemini-1.5-pro-latest", help="Model name (e.g., gemini-1.5-pro-latest)", key="gemini_model")
-                    if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
-                        alive, msg = check_connection(engine, ai_cfg["url"], ai_cfg["key"])
-                        if alive:
-                            st.success(msg)
-                        else:
-                            st.error(msg)
-                elif engine == "Ollama (Local)":
-                    ai_cfg["url"] = st.text_input("Ollama URL", ai_cfg.get("url", "http://localhost:11434/v1") or "http://localhost:11434/v1", help="Local Ollama server URL", key="ollama_url")
-                    ai_cfg["model"] = st.text_input(get_text("model"), value=ai_cfg.get("model", "llama3") or "llama3", help="Model name (e.g., llama3)", key="ollama_model")
-                    if st.button(f"🔌 {get_text('connect')}", use_container_width=True):
-                        alive, msg = check_connection(engine, ai_cfg["url"], None)
-                        if alive: 
-                            st.success(msg)
-                        else: 
-                            st.error(msg)
-            
-                # Content Type (simplified in simple mode)
-                if not simple_mode:
-                    current_content = st.session_state.get("content", "")
-                    detected_type = detect_content_type(current_content) if current_content else None
-                    
-                    content_type_options = ["Auto-detect", "Product Launch", "Newsletter", "Tutorial", 
-                                           "Marketing", "Internal", "Blog Post", "Announcement"]
-                    default_idx = 0
-                    if detected_type and detected_type in content_type_options:
-                        default_idx = content_type_options.index(detected_type)
-                    
-                    selected_content_type = st.selectbox(
-                        get_text("content_type_label"),
-                        content_type_options,
-                        index=default_idx,
-                        help="Helps AI understand your content better"
-                    )
-                    
-                    if selected_content_type == "Auto-detect":
-                        ai_content_type = detected_type
-                    else:
-                        ai_content_type = selected_content_type if selected_content_type != "Auto-detect" else None
-                    
-                    if detected_type and selected_content_type == "Auto-detect":
-                        st.caption(f"🔍 Detected: {detected_type}")
-                    
-                    # Context (advanced feature)
-                    with st.expander(f"📝 {get_text('context_optional')}", expanded=False):
-                        st.caption(get_text("add_context"))
-                        context_text = st.text_area(get_text("paste_notes"), height=100, help="Meeting notes, requirements, etc.")
-                else:
-                    # Simple mode: auto-detect only
-                    current_content = st.session_state.get("content", "")
-                    ai_content_type = detect_content_type(current_content) if current_content else None
-                    context_text = ""
-                    if ai_content_type:
-                        st.caption(f"🔍 Content type: {ai_content_type}")
-            
-            # Store AI config and content type in session state
-            st.session_state.ai_cfg = ai_cfg
-            st.session_state.ai_content_type = ai_content_type if engine != "None" else None
+                            st.toast(msg, icon="❌")
+
+                st.session_state.ai_cfg = ai_cfg
+                st.session_state.ai_content_type = None if engine == "None" else "Auto-detect"
+                st.session_state.context_text = ""
+
+            else:
+                # Cherry Studio-style provider selector
+                provider_options = [(p.id, f"{_get_provider_icon(p.provider_type)} {p.name}") for p in providers]
+                provider_ids = [p[0] for p in provider_options]
+                provider_labels = [p[1] for p in provider_options]
+
+                selected_idx = 0
+                current_id = st.session_state.get("selected_provider_id")
+                if current_id and current_id in provider_ids:
+                    selected_idx = provider_ids.index(current_id)
+
+                selected_provider_id = st.selectbox(
+                    f"🤖 {get_text('provider')}",
+                    options=provider_ids,
+                    format_func=lambda x: next((l for i, l in enumerate(provider_labels) if provider_ids[i] == x), x),
+                    index=selected_idx,
+                    key="provider_select"
+                )
+                st.session_state.selected_provider_id = selected_provider_id
+
+                if selected_provider_id:
+                    provider = manager.get_provider(selected_provider_id)
+                    if provider:
+                        # Show connection status
+                        api_key = manager.get_api_key(selected_provider_id)
+                        alive, status_msg = manager.check_connection(provider, api_key)
+                        st.caption(status_msg)
+
+                        # 4 Essential Elements from Cherry Studio:
+                        # 1. Provider Name (shown in selector, read-only)
+                        # 2. API Key
+                        # 3. API Host
+                        # 4. Models
+
+                        # Element 2: API Key
+                        if provider.provider_type != "ollama":
+                            # Use session_state to track key changes
+                            key_session_key = f"apikey_value_{selected_provider_id}"
+                            if key_session_key not in st.session_state:
+                                st.session_state[key_session_key] = manager.get_api_key(selected_provider_id) or ""
+
+                            def save_api_key():
+                                new_key = st.session_state[key_session_key]
+                                if new_key:
+                                    manager.set_api_key(selected_provider_id, new_key)
+                                    st.toast(get_text("toast_saved"), icon="✅")
+                                else:
+                                    manager.storage.delete_key(selected_provider_id)
+
+                            st.text_input(
+                                "🔑 API Key",
+                                value=st.session_state[key_session_key],
+                                type="password",
+                                placeholder="sk-...",
+                                key=key_session_key,
+                                help="Press Enter or click outside to save",
+                                on_change=save_api_key
+                            )
+
+                        # Element 3: API Host
+                        api_host = st.text_input(
+                            f"🌐 {get_text('api_host')}",
+                            value=provider.api_host,
+                            placeholder="https://api.openai.com/v1",
+                            key=f"host_{selected_provider_id}"
+                        )
+                        if api_host != provider.api_host:
+                            manager.update_provider(selected_provider_id, api_host=api_host)
+                            st.rerun()
+
+                        # Element 4: Models
+                        model_options = provider.models if provider.models else ["No models configured"]
+                        current_model_idx = 0
+                        if provider.default_model and provider.default_model in model_options:
+                            current_model_idx = model_options.index(provider.default_model)
+
+                        selected_model = st.selectbox(
+                            f"📋 {get_text('model')}",
+                            options=model_options,
+                            index=current_model_idx,
+                            key=f"model_{selected_provider_id}"
+                        )
+                        if selected_model != provider.default_model:
+                            manager.update_provider(selected_provider_id, default_model=selected_model)
+
+                        # Fetch models button
+                        col1, col2 = st.columns([1, 1])
+                        with col1:
+                            if st.button(get_text("fetch_models"), use_container_width=True, key=f"fetch_{selected_provider_id}", help=get_text("fetch_models")):
+                                with st.spinner(get_text("fetching")):
+                                    success, models, msg = manager.fetch_models(provider, api_key)
+                                    if success and models:
+                                        manager.update_provider(selected_provider_id, models=models)
+                                        st.toast(msg, icon="✅")
+                                        # Rerun to refresh the UI with updated models
+                                        st.rerun()
+                                    else:
+                                        st.toast(msg, icon="ℹ️")
+                        with col2:
+                            st.caption(get_text("models_available").format(count=len(provider.models)))
+
+                        # Test connection button
+                        if st.button(f"🔌 {get_text('test_connection')}", use_container_width=True, key=f"test_{selected_provider_id}"):
+                            alive, msg = manager.check_connection(provider, api_key)
+                            if alive:
+                                st.toast(msg, icon="✅")
+                            else:
+                                st.toast(msg, icon="❌")
+
+                        # Get config for AI calls
+                        config = get_provider_config(selected_provider_id)
+                        st.session_state.ai_cfg = config
+                        st.session_state.ai_content_type = "Auto-detect"
+                        st.session_state.context_text = ""
         
         # 2. FILES & TEMPLATES
         st.divider()
@@ -1281,7 +1807,7 @@ def main():
                                         if ErrorHandler:
                                             ErrorHandler.show_error_with_details(error)
                                         else:
-                                            st.error(error)
+                                            st.toast(error, icon="❌")
                                     elif loaded_content:
                                         st.session_state.content = loaded_content
                                         st.session_state.reset_editor = True
@@ -1299,7 +1825,7 @@ def main():
                                             optimizer.preview_cache = {}
                                             optimizer.last_preview_hash = None
                                             optimizer.last_preview_time = 0
-                                        st.success(f"✅ Loaded {sel_file}")
+                                        st.toast(get_text("toast_file_loaded").format(file_name=sel_file), icon="✅")
                                         time.sleep(0.5)
                                         st.rerun()
                             
@@ -1310,11 +1836,11 @@ def main():
                                         version_file = get_version_file_path(sel_file.replace(".md", ""))
                                         if os.path.exists(version_file):
                                             os.remove(version_file)
-                                        st.success(f"✅ Deleted {sel_file}")
+                                        st.toast(get_text("toast_file_deleted").format(file_name=sel_file), icon="✅")
                                         time.sleep(0.5)
                                         st.rerun()
                                     except Exception as e:
-                                        st.error(f"Failed to delete: {e}")
+                                        st.toast(get_text("toast_delete_failed").format(error=e), icon="❌")
                             
                             with file_col3:
                                 if st.button(get_text("history_button"), use_container_width=True, key="version_history_btn"):
@@ -1332,9 +1858,9 @@ def main():
                                 )
                                 st.caption(file_info_text)
                     else:
-                        st.info(get_text("no_files_search"))
+                        st.toast(get_text("no_files_search"), icon="ℹ️")
                 else:
-                    st.info(get_text("no_files_yet"))
+                    st.toast(get_text("no_files_yet"), icon="ℹ️")
                 
                 st.divider()
                 
@@ -1348,7 +1874,7 @@ def main():
                             if "content" in st.session_state:
                                 result = save_project(save_name, st.session_state.content)
                                 if result.startswith("✅"):
-                                    st.success(result)
+                                    st.toast(result, icon="✅")
                                     if save_name:
                                         clear_auto_save(save_name)
                                     time.sleep(0.5)
@@ -1357,11 +1883,11 @@ def main():
                                     if ErrorHandler:
                                         ErrorHandler.show_error_with_details(result)
                                     else:
-                                        st.error(result)
+                                        st.toast(result, icon="❌")
                             else:
-                                st.warning("No content to save")
+                                st.toast(get_text("toast_no_content_to_save"), icon="⚠️")
                         else:
-                            st.warning("Please enter a file name")
+                            st.toast(get_text("toast_enter_file_name"), icon="⚠️")
                 
                 with save_col2:
                     # Version History Settings
@@ -1375,14 +1901,14 @@ def main():
                             if "content" in st.session_state:
                                 result = save_project(save_name, st.session_state.content)
                                 if result.startswith("✅"):
-                                    st.success(result)
+                                    st.toast(result, icon="✅")
                                     clear_auto_save(save_name)
                                 else:
-                                    st.error(result)
+                                    st.toast(result, icon="❌")
                             else:
-                                st.warning("No content to save")
+                                st.toast(get_text("toast_no_content_to_save"), icon="⚠️")
                         else:
-                            st.warning("Please enter a file name")
+                            st.toast(get_text("toast_enter_file_name"), icon="⚠️")
                 with force_save_col2:
                     st.caption(get_text("force_save_help"))
             
@@ -1473,9 +1999,9 @@ def main():
                                 st.toast(f"✅ Loaded: {sel_template}")
                                 st.rerun()
                             elif sel_template:
-                                st.error(f"❌ Template '{sel_template}' not found. Available: {len(TEMPLATES)} templates")
-                else:
-                    st.info(get_text("no_templates_match"))
+                                st.toast(get_text("toast_template_not_found").format(template=sel_template, count=len(TEMPLATES)), icon="❌")
+                            else:
+                                st.toast(get_text("no_templates_match"), icon="ℹ️")
             
             # Version History Modal
             if st.session_state.get("show_version_history"):
@@ -1508,11 +2034,11 @@ def main():
                                         optimizer.last_preview_hash = None
                                         optimizer.last_preview_time = 0
 
-                                    st.success("✅ Version restored!")
+                                    st.toast(get_text("toast_version_restored"), icon="✅")
                                     time.sleep(0.5)
                                     st.rerun()
                                 else:
-                                    st.error("Failed to restore version")
+                                    st.toast(get_text("toast_restore_failed"), icon="❌")
                         with ver_col3:
                             if st.button("👁️ View", key=f"view_v{idx}", use_container_width=True):
                                 st.session_state.view_version_index = len(versions) - 1 - idx
@@ -1526,11 +2052,11 @@ def main():
                         version_file = get_version_file_path(project_name)
                         if os.path.exists(version_file):
                             os.remove(version_file)
-                        st.success("✅ Version history cleared")
+                        st.toast(get_text("toast_version_history_cleared"), icon="✅")
                         time.sleep(0.5)
                         st.rerun()
                 else:
-                    st.info("No version history available for this file.")
+                    st.toast(get_text("toast_no_version_history"), icon="ℹ️")
                 
                 if st.button("❌ Close", key="close_version_history"):
                     st.session_state.show_version_history = None
@@ -1705,7 +2231,7 @@ def main():
                         pass  # Silently fail for plugins
                             
             except Exception as e:
-                st.error("Components not available")
+                st.toast(get_text("toast_components_unavailable"), icon="❌")
 
         # 3. APPEARANCE (Grouped settings)
         st.divider()
@@ -1739,7 +2265,7 @@ def main():
                     plugins = registry.get_plugins_by_category()
                     
                     if plugins:
-                        st.success(f"✅ **{len(plugins)} {get_text('plugins_active')}**")
+                        st.toast(f"✅ **{len(plugins)} {get_text('plugins_active')}**", icon="✅")
                         st.caption(get_text("plugin_components_hint"))
                         
                         # Quick actions
@@ -1749,11 +2275,11 @@ def main():
                                 try:
                                     from plugin_system import reload_plugin_registry
                                     reload_plugin_registry()
-                                    st.success("Reloaded!")
+                                    st.toast(get_text("toast_reloaded"), icon="✅")
                                     time.sleep(0.5)
                                     st.rerun()
                                 except Exception as e:
-                                    st.error(f"Failed: {e}")
+                                    st.toast(f"Failed: {e}", icon="❌")
                         with col2:
                             if st.button(f"📚 {get_text('guide')}", use_container_width=True, help=get_text("view_plugin_guide_help")):
                                 st.session_state.show_plugin_docs = True
@@ -1775,7 +2301,7 @@ def main():
                                     st.caption(f"💡 {get_text('syntax_inserted')}")
                     else:
                         # No plugins - show simple getting started
-                        st.info("**🚀 No plugins yet**")
+                        st.toast(get_text("toast_no_plugins"), icon="🚀")
                         st.markdown("""
                         **Want to add custom components?**
                         
@@ -2011,7 +2537,7 @@ def main():
                             st.rerun()
                         
                 except Exception as e:
-                    st.error(f"Plugin error: {e}")
+                    st.toast(f"❌ {get_text('toast_plugin_error').format(error=e)}", icon="❌")
                     if ErrorHandler:
                         ErrorHandler.log_error("plugin_ui", e)
         
@@ -2019,11 +2545,72 @@ def main():
         st.divider()
         images_expanded = st.session_state.sidebar_expanded.get("image_assets", False)
         with st.expander(f"🖼️ {get_text('image_assets')}", expanded=images_expanded):
+            
+            # Function to handle image provider change and re-render
+            def on_image_provider_change():
+                new_provider = st.session_state.get("img_provider_select")
+                old_provider = st.session_state.get("img_provider", "Pollinations (AI)")
+                st.session_state.img_provider = new_provider
+                
+                # Only force re-render if the provider actually changed
+                if new_provider != old_provider:
+                    # Force preview re-render by updating content hash
+                    if "content" in st.session_state:
+                        st.session_state.last_preview_content_hash = None
+                    # Also clear any cached preview
+                    if PerformanceOptimizer and st.session_state.get("performance_optimizer"):
+                        st.session_state.performance_optimizer.preview_cache = {}
+            
             img_provider = st.selectbox(
                 get_text("image_source"), 
-                ["Pollinations (AI)", "Picsum (Stock)", "Placeholder (Text)"],
-                help=get_text("image_source_help")
+                ["Pollinations (AI)", "Picsum (Stock)", "Placeholder (Text)", 
+                 "Gradient (Blue)", "Gradient (Purple)", "Gradient (Sunset)",
+                 "Gradient (Ocean)", "Gradient (Forest)", "Gradient (Aurora)",
+                 "Gradient (Fire)", "Gradient (Midnight)",
+                 "Pattern (Dots)", "Pattern (Lines)"],
+                help=get_text("image_source_help"),
+                key="img_provider_select",
+                on_change=on_image_provider_change
             )
+            
+            # Update session state if changed (for backward compatibility)
+            if st.session_state.get("img_provider") != img_provider:
+                st.session_state.img_provider = img_provider
+            
+            # Check Pollinations Status Button
+            if img_provider == "Pollinations (AI)":
+                col_check1, col_check2 = st.columns([1, 1])
+                with col_check1:
+                    if st.button("🔄 Check AI Status", help="Check if Pollinations AI is back online", use_container_width=True, key="check_ai_status"):
+                        try:
+                            import urllib.request
+                            req = urllib.request.Request(
+                                "https://image.pollinations.ai/prompt/test?width=512&height=512",
+                                headers={'User-Agent': 'Mozilla/5.0'}
+                            )
+                            with urllib.request.urlopen(req, timeout=10) as response:
+                                if response.status == 200:
+                                    # Check if it's an image or upgrade page
+                                    content_type = response.headers.get('Content-Type', '')
+                                    if 'image' in content_type:
+                                        st.toast(get_text("toast_pollinations_online"), icon="✅")
+                                        st.session_state.pollinations_online = True
+                                    else:
+                                        st.toast(get_text("toast_pollinations_upgrade"), icon="⚠️")
+                                        st.session_state.pollinations_online = False
+                                else:
+                                    st.toast(get_text("toast_pollinations_not_responding"), icon="❌")
+                                    st.session_state.pollinations_online = False
+                        except Exception as e:
+                            st.toast(get_text("toast_pollinations_down"), icon="❌")
+                            st.session_state.pollinations_online = False
+                
+                # Show status indicator (inline only - no toast on page load)
+                with col_check2:
+                    if st.session_state.get('pollinations_online'):
+                        st.success("✓ " + get_text("toast_online"))
+                    else:
+                        st.warning("⏳ " + get_text("toast_checking"))
             
             # Image Library (nested in Images & Assets)
             st.markdown(f"**📚 {get_text('image_library')}**")
@@ -2065,10 +2652,10 @@ def main():
                                 with btn_col2:
                                     if st.button("🗑️", key=f"del_{img_info['filename']}", help="Delete"):
                                         if delete_image_from_library(img_info["filename"]):
-                                            st.success("Deleted")
+                                            st.toast(get_text("toast_deleted"), icon="✅")
                                             st.rerun()
             else:
-                st.info(get_text("no_images_library"))
+                st.toast(get_text("no_images_library"), icon="ℹ️")
         
             
             # Upload new image
@@ -2270,14 +2857,14 @@ def main():
                 if ErrorHandler:
                     ErrorHandler.show_error_with_details(error)
                 else:
-                    st.error(error)
+                    st.toast(error, icon="❌")
             elif shortcode:
-                st.success(get_text("image_uploaded"))
+                st.toast(get_text("image_uploaded"), icon="✅")
                 st.code(shortcode, language="text")
                 if save_to_lib:
-                    st.info(get_text("image_saved_to_library"))
+                    st.toast(get_text("image_saved_to_library"), icon="ℹ️")
             else:
-                st.error(shortcode if shortcode else "Upload failed")
+                st.toast(shortcode if shortcode else "Upload failed", icon="❌")
 
         # 7. PREVIEW MODE (At the bottom)
         st.divider()
@@ -2307,7 +2894,7 @@ def main():
             time_str = "recently"
         
         with st.container():
-            st.info(f"📋 Auto-saved content found from {time_str}. Restore?")
+            st.toast(f"📋 Auto-saved content found from {time_str}. Restore?", icon="ℹ️")
             col_restore, col_dismiss = st.columns(2)
             with col_restore:
                 if st.button("✅ Restore", use_container_width=True):
@@ -2366,7 +2953,7 @@ def main():
                             st.session_state.last_preview_content_hash = None
                             st.session_state.undo_stack = [tpl_content] if tpl_content else []
                             st.session_state.redo_stack = []
-                            st.toast(f"Loaded template: {label}")
+                            st.toast(get_text("toast_template_loaded"))
                             st.rerun()
 
         # Inline markdown syntax help
@@ -2443,7 +3030,7 @@ Right column
                 if not is_valid:
                     with st.expander("⚠️ Markdown Validation Issues", expanded=True):
                         for issue in issues:
-                            st.warning(issue)
+                            st.toast(issue, icon="⚠️")
                         st.caption("💡 These issues may affect rendering. Fix them for best results.")
 
         # Initialize undo stack with current content if empty
@@ -2755,18 +3342,18 @@ Right column
                 if st.session_state.current_project_name:
                     result = save_project(st.session_state.current_project_name, content_for_action)
                     if result.startswith("✅"):
-                        st.toast("Saved!")
+                        st.toast(get_text("toast_saved"), icon="✅")
                     else:
                         if ErrorHandler:
                             ErrorHandler.show_error_with_details(result)
                         else:
-                            st.error(result)
+                            st.toast(result, icon="❌")
                 else:
                     success, result = auto_save(content_for_action, None)
                     if success:
                         st.session_state.last_auto_save_time = result
                         st.session_state.auto_save_status = "saved"
-                        st.toast("Auto-saved!")
+                        st.toast(get_text("toast_auto_saved"), icon="💾")
                 st.session_state.keyboard_action = None
             elif keyboard_action == "undo":
                 if st.session_state.undo_stack and len(st.session_state.undo_stack) > 1:
@@ -2808,19 +3395,18 @@ Right column
                 if st.session_state.current_project_name:
                     result = save_project(st.session_state.current_project_name, content_to_save)
                     if result.startswith("✅"):
-                        st.toast("💾 Saved", icon="✅")
-                        st.success(result)
+                        st.toast(get_text("toast_saved"), icon="✅")
                     else:
                         if ErrorHandler:
                             ErrorHandler.show_error_with_details(result)
                         else:
-                            st.error(result)
+                            st.toast(result, icon="❌")
                 else:
                     success, result = auto_save(content_to_save, None)
                     if success:
                         st.session_state.last_auto_save_time = result
                         st.session_state.auto_save_status = "saved"
-                        st.toast("💾 Auto-saved!", icon="✅")
+                        st.toast(get_text("toast_auto_saved"), icon="✅")
         with kb_col2:
             undo_disabled = not (st.session_state.undo_stack and len(st.session_state.undo_stack) > 1)
             if st.button(
@@ -2917,7 +3503,7 @@ Right column
                     try:
                         with st.spinner(get_text("brainstorming_titles")):
                             titles, stat = run_ai(current_txt, "", ai_cfg, task_type="titles", content_type=ai_content_type)
-                        st.info(titles)
+                        st.toast(titles, icon="ℹ️")
                         st.session_state.last_titles_result = titles
                         detected_lang = detect_language(current_txt) if current_txt else "English"
                         lang_text = get_text("detected_language").format(lang=detected_lang)
@@ -2925,7 +3511,7 @@ Right column
                         set_ai_status("ai_status_success")
                         st.session_state.last_failed_ai_action = None
                     except Exception:
-                        st.toast(get_text("ai_action_failed"))
+                        st.toast(get_text("ai_action_failed"), icon="❌")
                         set_ai_status("ai_status_failed")
                         st.session_state.last_failed_ai_action = {"name": "generate_titles", "require_text": True}
                     finally:
@@ -2956,7 +3542,7 @@ Right column
                                     res,
                                     st.session_state.undo_stack
                                 )
-                            st.toast(f"✅ {msg} - Expanded content applied to editor!")
+                            st.toast(f"✅ {get_text('toast_expand_applied').format(msg=msg)}")
                             time.sleep(0.5)
                         set_ai_status("ai_status_success")
                         st.session_state.last_failed_ai_action = None
@@ -3063,13 +3649,13 @@ Right column
                         st.session_state.component_suggestions_content = current_txt  # Store content snapshot
 
                         if suggestions_list:
-                            st.success(get_text("found_suggestions").format(count=len(suggestions_list)))
+                            st.toast(get_text("found_suggestions").format(count=len(suggestions_list)), icon="✅")
                         else:
-                            st.info(get_text("no_suggestions"))
+                            st.toast(get_text("no_suggestions"), icon="ℹ️")
                         set_ai_status("ai_status_success")
                         st.session_state.last_failed_ai_action = None
                     except Exception:
-                        st.toast(get_text("ai_action_failed"))
+                        st.toast(get_text("ai_action_failed"), icon="❌")
                         set_ai_status("ai_status_failed")
                         st.session_state.last_failed_ai_action = {"name": "suggest_components", "require_text": True}
                     finally:
@@ -3100,7 +3686,7 @@ Right column
                                     res,
                                     st.session_state.undo_stack
                                 )
-                            st.toast(f"✅ {msg}")
+                            st.toast(f"✅ {get_text('toast_format_applied').format(msg=msg)}")
                             time.sleep(0.5)
                         set_ai_status("ai_status_success")
                         st.session_state.last_failed_ai_action = None
@@ -3261,7 +3847,7 @@ Right column
         # Retry affordance when last action failed
         # Show last generated titles if available
         if st.session_state.get("last_titles_result"):
-            st.info(st.session_state.last_titles_result)
+            st.toast(st.session_state.last_titles_result, icon="ℹ️")
         if (not st.session_state.ai_busy) and st.session_state.get("last_failed_ai_action"):
             failed_info = st.session_state.last_failed_ai_action
             action_name = failed_info.get("name")
@@ -3283,6 +3869,9 @@ Right column
         
         # Get content from editor (prefer editor_content as it's the most up-to-date)
         content_to_render = st.session_state.get("editor_content") or st.session_state.get("content", "")
+        
+        # Get image provider from session state (updated when changed in sidebar)
+        img_provider = st.session_state.get("img_provider", "Pollinations (AI)")
         
         # Initialize wechat_final to ensure it's always defined
         wechat_final = None
@@ -3324,7 +3913,7 @@ Right column
         if has_content:
             if is_large_preview and not st.session_state.get("preview_force_render", False):
                 size_kb = round(size_bytes / 1024)
-                st.info(f"Preview is large (~{size_kb} KB). Click to render on demand.", icon="⚠️")
+                st.toast(get_text("toast_large_preview"), icon="⚠️")
                 if st.button("Render preview", use_container_width=True, key="render_large_preview"):
                     st.session_state.preview_force_render = True
                     st.rerun()
@@ -4032,15 +4621,15 @@ body, html {{
                                     "application/pdf",
                                     key="download_pdf"
                                 )
-                                st.success("✅ PDF generated! Click download to save.")
+                                st.toast(get_text("toast_pdf_generated"), icon="✅")
                             else:
                                 # Show user-friendly error message
                                 if ErrorHandler:
                                     ErrorHandler.show_error_with_details(status)
                                 else:
-                                    st.error(f"❌ PDF failed: {status} / 请重试")
+                                    st.toast(f"❌ PDF failed: {status} / 请重试", icon="❌")
                 else:
-                    st.info("💡 PDF: `pip install reportlab`")
+                    st.toast(get_text("toast_pdf_install_hint"), icon="💡")
             
             with col_word:
                 # Word Export
@@ -4058,11 +4647,11 @@ body, html {{
                                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                                     key="download_word"
                                 )
-                                st.success("✅ Word document generated!")
+                                st.toast(get_text("toast_word_generated"), icon="✅")
                             else:
-                                st.error(f"❌ Word failed: {status} / 请重试")
+                                st.toast(f"❌ Word failed: {status} / 请重试", icon="❌")
                 else:
-                    st.info("💡 Word: `pip install python-docx`")
+                    st.toast(get_text("toast_word_install_hint"), icon="💡")
             
             with col_html:
                 st.download_button(get_text("download_html"), standard_full, "article.html", "text/html", use_container_width=True)

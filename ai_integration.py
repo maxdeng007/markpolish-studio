@@ -21,6 +21,60 @@ try:
 except ImportError:
     HAS_OPENAI = False
 
+# Import provider manager
+try:
+    from ai_provider_manager import get_manager, AIProvider
+    HAS_PROVIDER_MANAGER = True
+except ImportError:
+    HAS_PROVIDER_MANAGER = False
+    AIProvider = None
+
+
+def get_provider_config(provider_id: str) -> dict:
+    """
+    Get provider configuration for AI calls
+
+    Args:
+        provider_id: Provider ID
+
+    Returns:
+        Dict with engine, url, key, model
+    """
+    if not HAS_PROVIDER_MANAGER:
+        return {"engine": "None", "url": "", "key": "", "model": ""}
+
+    manager = get_manager()
+    provider = manager.get_provider(provider_id)
+
+    if not provider:
+        return {"engine": "None", "url": "", "key": "", "model": ""}
+
+    # Get API key based on security level
+    api_key = manager.get_api_key(provider_id) if provider.provider_type != "ollama" else ""
+
+    return {
+        "engine": provider.provider_type,
+        "url": provider.api_host,
+        "key": api_key,
+        "model": provider.default_model,
+        "provider_name": provider.name,
+        "icon": _get_provider_icon(provider.provider_type),
+    }
+
+
+def _get_provider_icon(provider_type: str) -> str:
+    """Get icon for provider type"""
+    icons = {
+        "openai": "🔵",
+        "openrouter": "🟣",
+        "anthropic": "🟠",
+        "gemini": "🟡",
+        "deepseek": "🔴",
+        "ollama": "🟢",
+        "custom": "⚪",
+    }
+    return icons.get(provider_type, "🤖")
+
 
 def check_connection(engine, url, key):
     """Check connection to AI service"""
