@@ -2,6 +2,33 @@
 
 A powerful Streamlit-based content creation and editing tool for creating beautifully formatted markdown content, especially optimized for WeChat publishing.
 
+## What's New (Latest Updates)
+
+### 🎨 Enhanced Image System
+- **8 Beautiful Gradient Styles**: Blue, Purple, Sunset, Ocean, Forest, Aurora, Fire, Midnight
+- **Real Pattern Backgrounds**: Polka dots and diagonal lines patterns with grey tones
+- **Consistent 16:9 Ratio**: All images now use 800x450 (16:9) aspect ratio
+- **Auto-Render**: Preview updates automatically when Image Source changes
+
+### 🤖 AI Actions - Now Fully Working!
+- **Generate Titles**: Displays persistently below button with copy functionality
+- **Smart Format**: Better error handling and detailed logging
+- **Expand Content**: Improved error reporting with debug info
+- **Suggest Components**: Insert components with one click
+- **Polish with Context**: Conservative mode preserves original format
+- **Fixed Ollama Integration**: 
+  - Now actually fetches models from local Ollama instance
+  - Better connection checking with specific error messages
+  - Normalized engine name detection
+  - 60-second timeout for local models
+
+### 🐛 Bug Fixes
+- Fixed NameError: context_text not defined
+- Removed empty div elements from DOM
+- Fixed sidebar spacing (gap:0 no longer affects sidebar)
+- Better session state initialization
+- Comprehensive error logging for debugging
+
 ## Features
 
 - 📝 **Rich Markdown Editor** - Create content with markdown syntax and custom components
@@ -14,6 +41,8 @@ A powerful Streamlit-based content creation and editing tool for creating beauti
 - 📱 **WeChat Optimized** - Content optimized for WeChat publishing
 - 💾 **Auto-save** - Never lose your work with automatic saving
 - 🔄 **Version History** - Track changes and restore previous versions
+- 🌈 **Beautiful Gradients** - 8 stunning gradient styles for image placeholders
+- 📐 **Pattern Backgrounds** - Real SVG-based patterns (dots, lines) for visual appeal
 
 ## Installation
 
@@ -114,11 +143,34 @@ Choose from multiple themes optimized for different content types:
 
 ### AI Features
 
-- **Polish**: Improve and refine your content
-- **Format**: Better structure and formatting
-- **Expand**: Add more detail and context
-- **Titles**: Generate catchy titles
-- **Suggest Components**: Get suggestions for components to add
+#### Supported AI Providers
+- **Ollama (Local)** - Run AI models locally with full privacy
+- **OpenAI** - GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo
+- **OpenRouter** - Access to multiple AI models through single API
+- **Gemini** - Google's AI models
+- **Anthropic** - Claude models
+- **DeepSeek** - Cost-effective AI models
+
+#### AI Actions
+- **💡 Generate Titles**: Generate catchy, punchy titles for your content (persists below button with copy functionality)
+- **📈 Expand Content**: Add more detail, examples, and context to your content
+- **✨ Smart Format**: Improve structure and formatting while preserving content
+- **💡 Suggest Components**: Get AI suggestions for markdown components to enhance layout
+- **🧠 Polish with Context**: Refine content using optional context notes (conservative mode preserves original format)
+
+#### AI Configuration Tips
+- **Ollama**: Ensure Ollama is running locally (http://localhost:11434). Click "Fetch Models" to load available models.
+- **Cloud Providers**: Enter your API key in the sidebar. Keys are session-only by default for security.
+- **Error Debugging**: AI actions now show detailed error messages with engine, model, and URL info for troubleshooting.
+
+### Image Source Options
+
+Choose from multiple image sources:
+- **Pollinations (AI)** - AI-generated images from text prompts
+- **Picsum (Stock)** - Random high-quality stock photos
+- **Placeholder (Text)** - Text placeholders for layout planning
+- **Gradients (8 styles)** - Beautiful CSS gradients: Blue, Purple, Sunset, Ocean, Forest, Aurora, Fire, Midnight
+- **Patterns** - Real SVG-based patterns: Dots, Lines
 
 ### Export Options
 
@@ -154,12 +206,36 @@ Choose from multiple themes optimized for different content types:
 
 ### AI Configuration
 
-Configure AI settings in the sidebar:
-- **Engine**: Choose AI provider (Ollama Local, Gemini, OpenAI, OpenRouter)
-- **Model**: Select AI model
-- **API Key**: Enter your API key
+Configure AI settings in the sidebar using the new Provider Manager:
+- **Provider Selection**: Choose from Ollama (local), OpenAI, OpenRouter, Gemini, Anthropic, or DeepSeek
+- **API Host**: Enter the API endpoint URL
+- **API Key**: Enter your API key (stored securely with configurable security levels)
+- **Model Selection**: Choose from available models (click "Fetch Models" to load from provider)
+- **Security Options**: Choose security level for API key storage:
+  - Session Only (Level 1): Key lost when browser closes
+  - Encrypted Local (Level 2): Key stored encrypted on disk
+  - Never Save (Level 0, default for cloud): Key never persisted
 
-### PDF Export
+### Image Source Options
+
+Choose from multiple image sources for your content:
+- **Pollinations (AI)** - AI-generated images from text prompts
+- **Picsum (Stock)** - Random high-quality stock photos
+- **Placeholder (Text)** - Text placeholders for layout planning
+- **Gradients (8 styles)** - Beautiful CSS gradients:
+  - Gradient (Blue) - Blue to purple gradient
+  - Gradient (Purple) - Purple gradient
+  - Gradient (Sunset) - Orange to red gradient
+  - Gradient (Ocean) - Cyan to blue gradient
+  - Gradient (Forest) - Green gradient
+  - Gradient (Aurora) - Aurora borealis style
+  - Gradient (Fire) - Red to yellow gradient
+  - Gradient (Midnight) - Dark blue gradient
+- **Patterns** - Real SVG-based patterns:
+  - Pattern (Dots) - Polka dots pattern on grey background
+  - Pattern (Lines) - Diagonal lines pattern on grey background
+
+All images use consistent 800x450 (16:9) aspect ratio for visual consistency.
 
 Install at least one PDF library:
 ```bash
@@ -187,6 +263,16 @@ See `plugins/README.md` for detailed plugin documentation.
 - Install OpenAI: `pip install openai`
 - Check API key configuration
 - Verify network connection
+- **For Ollama users**: 
+  - Ensure Ollama is running: `ollama serve`
+  - Check Ollama URL is correct (default: http://localhost:11434/v1)
+  - Click "Test Connection" to verify Ollama is accessible
+  - Click "Fetch Models" to load available local models
+  - Check browser console for specific error messages (engine, model, URL shown in UI)
+- **Common errors**: 
+  - "NameError: context_text" - Fixed in V1.1
+  - "Ollama models not fetching" - Fixed in V1.1 (now actually fetches from API)
+  - "Connection Failed" - Check Ollama is running locally
 
 ### Images Not Loading
 - Check image file paths
@@ -198,13 +284,14 @@ See `plugins/README.md` for detailed plugin documentation.
 ### Code Structure
 
 The codebase is organized into modules:
-- **config.py**: Configuration and constants
+- **app.py**: Main UI and orchestration
+- **ai_provider_manager.py**: NEW - Multi-provider AI management with secure key storage
+- **ai_integration.py**: AI features with Ollama fixes and improved prompts
+- **content_processing.py**: Content processing
 - **file_operations.py**: File management
 - **pdf_generator.py**: PDF generation
 - **image_handling.py**: Image operations
-- **ai_integration.py**: AI features
-- **content_processing.py**: Content processing
-- **app.py**: Main UI and orchestration
+- **config.py**: Configuration and constants
 
 ### Contributing
 
@@ -218,7 +305,7 @@ The codebase is organized into modules:
 
 MIT License
 
-Copyright (c) 2024 MarkPolish Studio contributors
+Copyright (c) 2024-2026 MarkPolish Studio contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -244,5 +331,5 @@ For issues, questions, or contributions, please [add your support contact inform
 
 ## Version
 
-MarkPolish Studio V1.0 - Content Ops Edition
+MarkPolish Studio V1.1 - Content Ops Edition (AI & UI Improvements)
 
