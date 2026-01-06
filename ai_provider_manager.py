@@ -369,7 +369,21 @@ class AIProviderManager:
                     model_list = [m["id"] for m in data.get("data", [])]
                     return True, sorted(model_list), "Models fetched"
 
-            elif ptype in ("gemini", "deepseek", "ollama"):
+            elif ptype == "ollama":
+                # Actually fetch models from Ollama
+                try:
+                    clean_url = provider.api_host.replace("/v1", "").rstrip("/")
+                    r = requests.get(f"{clean_url}/api/tags", timeout=5)
+                    if r.status_code == 200:
+                        data = r.json()
+                        model_list = [m["name"] for m in data.get("models", [])]
+                        if model_list:
+                            return True, sorted(model_list), f"Found {len(model_list)} models"
+                    return True, provider.models.copy(), "Using defaults"
+                except Exception as e:
+                    return True, provider.models.copy(), f"Fetch failed: {str(e)[:20]}"
+
+            elif ptype in ("gemini", "deepseek"):
                 return True, provider.models.copy(), "Default models"
 
             else:
