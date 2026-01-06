@@ -4084,7 +4084,7 @@ Right column
                         .mp-wechat ul, .mp-wechat ol {{padding-left: 20px; margin-bottom: 16px;}}
                         .mp-wechat strong {{font-weight: bold; color: {primary};}}
                         .mp-wechat img {{max-width: 100%; height: auto; display: block; margin: 12px auto; border-radius: {radius};}}
-                        .mp-wechat .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center; border-radius: {radius}; margin: 0 0 25px 0; box-shadow: inherit;}}
+                        .mp-wechat .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center !important; border-radius: {radius}; margin: 0 0 25px 0; box-shadow: inherit;}}
                         .mp-wechat .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius}; box-shadow: inherit;}}
                         .mp-wechat .mp-card h3 {{margin-top: 0; color: {primary};}}
                         .mp-wechat .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0;}}
@@ -4187,7 +4187,7 @@ Right column
         strong{{font-weight:bold;color:{primary};}}
         
         /* Hero Component */
-        .mp-hero{{background:{card_bg};padding:35px 20px;text-align:center;border-radius:{radius};margin:0 0 25px 0;box-shadow:{shadow};box-sizing:border-box;}}
+        .mp-hero{{background:{card_bg};padding:35px 20px;text-align:center !important;border-radius:{radius};margin:0 0 25px 0;box-shadow:{shadow};box-sizing:border-box;}}
         .mp-hero h1{{text-align:center !important;margin-top:0 !important;}}
         
         /* Card Component */
@@ -4298,7 +4298,7 @@ Right column
                         .mp-fallback p {{margin-bottom: 16px;}}
                         .mp-fallback h1 {{color: {primary}; font-size: 24px; font-weight: bold;}}
                         .mp-fallback h2 {{color: {primary}; font-size: 18px; font-weight: bold;}}
-                        .mp-fallback .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center; border-radius: {radius};}}
+                        .mp-fallback .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center !important; border-radius: {radius};}}
                         .mp-fallback .mp-hero h1 {{text-align: center !important;}}
                         .mp-fallback .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius};}}
                         .mp-fallback .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap;}}
@@ -4521,6 +4521,37 @@ body, html {{
     font-size: 17px;
     font-weight: bold;
     margin: 20px 0 10px 0;
+}}
+
+/* Hero Component - override general h1 for hero sections */
+.mp-canvas .mp-hero,
+.mp-canvas section[style*="text-align: center"] {{
+    background: {card_bg};
+    padding: 35px 20px;
+    text-align: center !important;
+    border-radius: {border_radius};
+    margin: 0 0 25px 0;
+    box-shadow: {shadow};
+    box-sizing: border-box;
+    width: 100%;
+}}
+.mp-canvas .mp-hero h1,
+.mp-canvas section[style*="text-align: center"] h1 {{
+    text-align: center !important;
+    margin-top: 0 !important;
+    color: {primary_color};
+    font-size: 24px;
+    font-weight: bold;
+}}
+
+/* Card Component */
+.mp-canvas .mp-card {{
+    background: {card_bg};
+    border-left: 4px solid {primary_color};
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: {border_radius};
+    box-shadow: {shadow};
 }}
 .mp-canvas strong {{ 
     color: {primary_color}; 

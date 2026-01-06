@@ -544,28 +544,22 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
     # Syntax: ::: hero \n # Title \n Sub \n :::
     def hero_r(m):
         c = m.group(1)
+        # Process H1 to add center alignment inline style
+        h1_style_raw = s["h1"]
+        h1_centered = h1_style_raw.replace("text-align: left", "text-align: center")
+        if "text-align: center" not in h1_centered:
+            h1_centered += " text-align: center;"
+        
+        # Replace markdown # with styled H1
+        c = re.sub(r'^# (.*)', f'<h1 style="{h1_centered}">\\1</h1>', c, flags=re.MULTILINE)
+        
+        # Add text-align: center to container's inline style to ensure centering
+        hero_style = s["hero"] + " text-align: center;"
+        
         if mode=="wechat": 
-            # CAN MODIFICATION: Force center alignment for Hero H1 specifically
-            # We grab the H1 style, but swap text-align:left for center
-            h1_style_raw = s["h1"]
-            h1_centered = h1_style_raw.replace("text-align: left", "text-align: center")
-            if "text-align: center" not in h1_centered:
-                h1_centered += " text-align: center;"
-            
-            # Replace markdown # with styled H1
-            c = re.sub(r'^# (.*)', f'<h1 style="{h1_centered}">\\1</h1>', c, flags=re.MULTILINE)
-            # Return wrapped in section
-            return f'<section style="{s["hero"]}">{c}</section>' 
+            return f'<section style="{hero_style}">{c}</section>' 
         else:
-            # Web preview mode - also apply center alignment to H1
-            h1_style_raw = s["h1"]
-            h1_centered = h1_style_raw.replace("text-align: left", "text-align: center")
-            if "text-align: center" not in h1_centered:
-                h1_centered += " text-align: center;"
-            
-            # Replace markdown # with styled H1
-            c = re.sub(r'^# (.*)', f'<h1 style="{h1_centered}">\\1</h1>', c, flags=re.MULTILINE)
-            return f'<div class="mp-hero">{c}</div>'
+            return f'<div class="mp-hero" style="{hero_style}">{c}</div>'
             
     text = re.sub(r'(?is):::\s*hero\n(.*?)\n:::', hero_r, text)
     
