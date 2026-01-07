@@ -169,6 +169,141 @@ def detect_language(text):
     return "Chinese" if chinese_ratio > 0.3 else "English"
 
 
+def detect_content_type(text):
+    """
+    Detect content type based on text patterns and structure
+    
+    Args:
+        text: Content to analyze
+        
+    Returns:
+        Detected content type string
+    """
+    if not text:
+        return "Blog Post"
+    
+    text_lower = text.lower()
+    
+    # Tutorial/How-to patterns
+    tutorial_patterns = [
+        r'step\s*\d', r'how\s*to', r'tutorial', r'instruction',
+        r'first,?\s+second', r'begin with', r'start by',
+        r'\d+\.\s+\w+', r'next,?\s+then', r'finally,?\s+'
+    ]
+    if any(re.search(p, text_lower) for p in tutorial_patterns):
+        return "Tutorial"
+    
+    # Timeline/History patterns
+    timeline_patterns = [
+        r'\d{4}', r'year\s*\d', r' history', r'chronological',
+        r'originally', r'previously', r'eventually', r'over time',
+        r'back in', r'decade', r'century', r'timeline'
+    ]
+    if any(re.search(p, text_lower) for p in timeline_patterns):
+        return "Timeline"
+    
+    # Announcement patterns
+    announcement_patterns = [
+        r'announce', r'launching', r'introducing', r'new feature',
+        r'coming soon', r'exciting news', r'breaking',
+        r'public notice', r'official statement'
+    ]
+    if any(re.search(p, text_lower) for p in announcement_patterns):
+        return "Announcement"
+    
+    # Product Launch patterns
+    product_patterns = [
+        r'product', r'feature', r'upgrade', r'release',
+        r'now available', r'check out', r'shop now',
+        r'buy now', r'limited time', r'special offer'
+    ]
+    if any(re.search(p, text_lower) for p in product_patterns):
+        return "Product Launch"
+    
+    # Newsletter patterns
+    newsletter_patterns = [
+        r'welcome', r'subscribe', r'reader', r'weekly',
+        r'monthly', r'digest', r'in this issue', r'community'
+    ]
+    if any(re.search(p, text_lower) for p in newsletter_patterns):
+        return "Newsletter"
+    
+    # Marketing patterns
+    marketing_patterns = [
+        r'benefit', r'why you should', r'don\'t miss',
+        r'limited offer', r'only \d+', r'best choice',
+        r'proven', r'result', r'transform'
+    ]
+    if any(re.search(p, text_lower) for p in marketing_patterns):
+        return "Marketing"
+    
+    # Default to Blog Post for general content
+    return "Blog Post"
+
+
+def analyze_structure(text):
+    """
+    Analyze the structural patterns in the content
+    
+    Args:
+        text: Content to analyze
+        
+    Returns:
+        Dictionary with structural analysis
+    """
+    lines = text.strip().split('\n')
+    
+    analysis = {
+        'has_hero': False,
+        'heading_count': 0,
+        'heading_levels': [],
+        'paragraph_count': 0,
+        'list_items': 0,
+        'has_timeline_pattern': False,
+        'has_steps_pattern': False,
+        'has_comparison': False,
+        'total_lines': len(lines),
+        'has_intro': False,
+        'has_conclusion': False
+    }
+    
+    # Analyze headings
+    h1_count = 0
+    for line in lines:
+        line_stripped = line.strip()
+        if line_stripped.startswith('#'):
+            level = len(line_stripped) - len(line_stripped.lstrip('#'))
+            analysis['heading_levels'].append(level)
+            analysis['heading_count'] += 1
+            if level == 1:
+                h1_count += 1
+                if analysis['heading_count'] == 1:
+                    analysis['has_hero'] = True
+        
+        elif line_stripped and not line_stripped.startswith('#'):
+            # Check for paragraph (non-empty line that's not a heading)
+            if len(line_stripped) > 50:  # Likely a paragraph
+                if analysis['heading_count'] == 0:
+                    analysis['has_intro'] = True
+                if analysis['heading_count'] > 0:
+                    analysis['has_conclusion'] = True
+            
+            # Check for list items
+            if re.match(r'^[\-\*\+]\s+', line_stripped) or re.match(r'^\d+[\.\)]\s+', line_stripped):
+                analysis['list_items'] += 1
+    
+    # Detect patterns
+    text_lower = text.lower()
+    if any(p in text_lower for p in ['step', 'first', 'second', 'then', 'finally', 'next']):
+        analysis['has_steps_pattern'] = True
+    if any(p in text_lower for p in ['year', 'history', 'timeline', 'chronological', 'originally']):
+        analysis['has_timeline_pattern'] = True
+    if any(p in text_lower for p in ['vs\s+\w+|versus|compare|difference|instead|both']):
+        analysis['has_comparison'] = True
+    
+    return analysis
+
+
 def run_ai(text, context, config, task_type="polish", content_type=None, available_plugins=None):
     """
     Run AI task with optional plugin information
@@ -216,9 +351,12 @@ def run_ai(text, context, config, task_type="polish", content_type=None, availab
         "Internal": "Write in a professional, clear internal communication style. Be concise and actionable.",
         "Blog Post": "Write in an engaging, conversational blog style. Use storytelling and personal insights.",
         "Announcement": "Write in a clear, professional announcement style. Highlight key information upfront.",
+        "Timeline": "Write in a chronological, historical narrative style. Use dates and time markers effectively.",
     }
     
-    content_style = content_type_prompts.get(content_type, "") if content_type else ""
+    # Auto-detect content type if not provided
+    detected_content_type = content_type if content_type else detect_content_type(text)
+    content_style = content_type_prompts.get(detected_content_type, "") if detected_content_type else ""
     style_instruction = f"\n5. Writing Style: {content_style}" if content_style else ""
 
     # Detect language for titles
@@ -254,22 +392,101 @@ def run_ai(text, context, config, task_type="polish", content_type=None, availab
         )
         user_content = f"CONTENT TO EXPAND:\n{text}\n\nCONTEXT (if helpful):\n{context}"
     elif task_type == "format":
+        # Analyze structure first
+        structure_analysis = analyze_structure(text)
+        
+        # Build intelligent component suggestions based on analysis
+        component_suggestions = []
+        
+        # Hero suggestion
+        if not structure_analysis['has_hero']:
+            component_suggestions.append("::: hero - Use at the beginning for main title and subtitle")
+        
+        # Timeline suggestion for chronological content
+        if structure_analysis['has_timeline_pattern']:
+            component_suggestions.append("::: timeline - Use for chronological events or history")
+        
+        # Steps suggestion for tutorial/how-to content
+        if structure_analysis['has_steps_pattern'] or detected_content_type == "Tutorial":
+            component_suggestions.append("::: steps - Use for step-by-step instructions")
+        
+        # Col-2 for comparisons
+        if structure_analysis['has_comparison']:
+            component_suggestions.append("::: col-2 - Use for side-by-side comparison")
+        
+        # Card for key points or summaries
+        if structure_analysis['list_items'] >= 3:
+            component_suggestions.append("::: card - Use for highlighting key points or summaries")
+        
+        # Col-3 for three-way comparisons or triads
+        if structure_analysis['list_items'] >= 6:
+            component_suggestions.append("::: col-3 - Use for three-column layouts")
+        
         # Build component list for format task
-        format_components_note = "markdown components (::: hero, ::: col-2, ::: card, etc.)"
+        format_components_note = "markdown components (::: hero, ::: col-2, ::: col-3, ::: steps, ::: timeline, ::: card, etc.)"
         if plugin_components_info:
             format_components_note += f" including available plugin components{plugin_components_info.replace('Also available plugin components:', '')}"
         
+        # Create comprehensive structure analysis note
+        analysis_note = (
+            f"\n\nSTRUCTURE ANALYSIS:\n"
+            f"- Current headings: {structure_analysis['heading_count']}\n"
+            f"- Heading levels: {structure_analysis['heading_levels']}\n"
+            f"- List items: {structure_analysis['list_items']}\n"
+            f"- Has chronological pattern: {structure_analysis['has_timeline_pattern']}\n"
+            f"- Has step-by-step pattern: {structure_analysis['has_steps_pattern']}\n"
+            f"- Has comparison pattern: {structure_analysis['has_comparison']}\n"
+            f"- Detected content type: {detected_content_type}\n"
+        )
+        
         sys_msg = (
-            "You are a Markdown Formatting Assistant. "
-            "Improve the structure and formatting of the content. "
-            "1. Keep the original content, order, and meaning; do not add boilerplate or placeholders. "
-            "2. Improve readability and flow with headings/lists, but do NOT add HTML comments or markers. "
-            f"3. Add appropriate {format_components_note} only if they clearly improve structure; otherwise keep existing layout. "
-            "4. Do not duplicate content or insert promotional text. "
-            "5. CRITICAL: Protect existing [IMG] and ::: tags; do not wrap them or alter their content."
+            "You are an Expert Content Architect. Your task is to intelligently restructure and format content "
+            "to maximize readability, visual appeal, and logical flow. Think of yourself as a professional "
+            "editor who transforms raw content into beautifully structured documents.\n\n"
+            
+            "CRITICAL FORMATTING RULES (follow in order of priority):\n\n"
+            
+            "1. HEADING HIERARCHY (Most Important):\n"
+            "- Ensure ONE H1 (#) at the very beginning - this is the main title\n"
+            "- Use H2 (##) for major sections under the main title\n"
+            "- Use H3 (###) for subsections under H2\n"
+            "- NEVER skip heading levels (no H1 → H3)\n"
+            "- Ensure headings form a logical, nested structure\n\n"
+            
+            "2. COMPONENT PLACEMENT:\n"
+            "- Place hero component at the VERY BEGINNING if there's a main title\n"
+            "- Place timeline component for chronological/historical content\n"
+            "- Place steps component for how-to/tutorial content\n"
+            "- Place col-2 for side-by-side comparisons or two related items\n"
+            "- Place col-3 for three-column layouts\n"
+            "- Place card components to highlight key takeaways, summaries, or important notes\n"
+            "- Place components where they naturally fit the content flow\n"
+            f"SUGGESTED COMPONENTS FOR THIS CONTENT:\n{chr(10).join(component_suggestions) if component_suggestions else '- No specific components suggested based on analysis'}\n\n"
+            
+            "3. CONTENT PRESERVATION (Strict Rules):\n"
+            "- KEEP all original content, wording, and meaning\n"
+            "- NEVER add boilerplate, placeholders, or promotional text\n"
+            "- NEVER duplicate or repeat content\n"
+            "- Only restructure, don't rewrite\n\n"
+            
+            "4. FLOW AND READABILITY:\n"
+            "- Add appropriate whitespace (blank lines) between sections\n"
+            "- Use bullet points or numbered lists for sequential items (3+ items)\n"
+            "- Group related information together\n"
+            "- Ensure logical progression from intro → body → conclusion\n\n"
+            
+            "5. TAG PROTECTION:\n"
+            "- CRITICAL: Protect existing [IMG] and ::: tags exactly as they are\n"
+            "- Do not wrap, modify, or alter these special tags\n"
+            "- If adding new components, use the exact syntax: ::: component-name\n"
+            f"{plugin_components_info}\n"
+            
+            f"OUTPUT:\n"
+            "Return ONLY the formatted content. Do not include explanations or notes about changes.\n"
+            "Ensure the output is valid Markdown with proper structure.\n"
             f"{style_instruction}"
         )
-        user_content = f"CONTENT:\n{text}"
+        user_content = f"CONTENT TO FORMAT:\n{text}{analysis_note}"
     elif task_type == "suggest_components":
         detected_lang = detect_language(text)
         lang_note = "用中文回答" if detected_lang == "Chinese" else "Answer in English"

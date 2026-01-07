@@ -5,6 +5,7 @@ import streamlit as st
 import random
 import os
 import shlex
+import markdown
 
 # Import image handling functions for library fallback
 try:
@@ -573,18 +574,22 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
             html = '<section class="mp-steps-wrapper" style="margin: 20px 0; display: block; clear: both; width: 100%;">'
             for i, line in enumerate(lines, 1):
                 content = re.sub(r'^\d+[\.\)]\s*', '', line)
+                # Process markdown in content
+                content_html = markdown.markdown(content)
                 html += (f'<div style="{s["step_box"]}">'
                          f'<span style="{s["step_num"]}">{i}</span>'
-                         f'<span style="flex: 1 1 auto; display: inline-block; vertical-align: middle;">{content}</span></div>')
+                         f'<span style="flex: 1 1 auto; display: inline-block; vertical-align: middle;">{content_html}</span></div>')
             html += '</section>'
         else: 
             # Web mode - use CSS classes
             html = '<div class="mp-steps">'
             for i, line in enumerate(lines, 1):
                 content = re.sub(r'^\d+[\.\)]\s*', '', line)
+                # Process markdown in content
+                content_html = markdown.markdown(content)
                 html += (f'<div class="mp-step">'
                          f'<span class="mp-step__num">{i}</span>'
-                         f'<span class="mp-step__content">{content}</span></div>')
+                         f'<span class="mp-step__content">{content_html}</span></div>')
             html += '</div>'
         return html
         
@@ -600,9 +605,11 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
             # WeChat mode - use inline styles
             html = '<section class="mp-timeline-wrapper" style="margin: 20px 0; padding-left: 15px; display: block; clear: both; width: 100%;">'
             for line in lines:
+                # Process markdown in content
+                content_html = markdown.markdown(line)
                 html += (f'<div style="{s["time_box"]}">'
                          f'<span style="{s["time_dot"]}"></span>'
-                         f'<span style="display: inline-block; vertical-align: middle;">{line}</span></div>')
+                         f'<span style="display: inline-block; vertical-align: middle;">{content_html}</span></div>')
             html += '</section>'
         else: 
             # Web mode - use CSS classes with dynamic primary color
@@ -610,9 +617,11 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
             dot_style = f'background-color: {primary_color};'
             html = '<div class="mp-timeline">'
             for line in lines:
+                # Process markdown in content
+                content_html = markdown.markdown(line)
                 html += (f'<div class="mp-timeline__item" style="{timeline_style}">'
                          f'<span class="mp-timeline__dot" style="{dot_style}"></span>'
-                         f'<span>{line}</span></div>')
+                         f'<span>{content_html}</span></div>')
             html += '</div>'
         return html
         
@@ -627,6 +636,9 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
         
         # Get primary color for styling
         primary_color = s.get("primary", "#4A90E2")
+        
+        # Process markdown in content
+        content_html = markdown.markdown(content) if content else ""
         
         # WeChat mode uses basic inline styles, web mode uses CSS classes
         if mode == "wechat":
@@ -647,12 +659,12 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
                 </svg>
             </div>
             """
-            return f'<section style="{box_style}" id="{unique_id}"><div style="{inner_style}">{content}</div>{svg_overlay}</section>'
+            return f'<section style="{box_style}" id="{unique_id}"><div style="{inner_style}">{content_html}</div>{svg_overlay}</section>'
         else:
             # Web mode - use CSS classes
             return f"""
             <div class="mp-reveal" id="{unique_id}">
-                <div class="mp-reveal__content">{content}</div>
+                <div class="mp-reveal__content">{content_html}</div>
                 <div class="mp-reveal__overlay">
                     <svg style="width:100%; height:100%; cursor:pointer;" viewBox="0 0 300 100" preserveAspectRatio="none">
                         <g style="cursor:pointer;" pointer-events="all">
@@ -679,11 +691,14 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
         parts = [x.strip() for x in m.group(1).split("--split--") if x.strip()]
         if len(parts) < 2: return m.group(0) # fallback if not enough parts
         
+        # Process markdown in each column
+        parts_html = [markdown.markdown(p) for p in parts]
+        
         if mode=="wechat":
-            col_html = "".join([f'<div style="{s["col"]}">{p}</div>' for p in parts])
+            col_html = "".join([f'<div style="{s["col"]}">{p}</div>' for p in parts_html])
             return f'<section style="{s["grid"]}">{col_html}</section>'
         else:
-            col_html = "".join([f'<div class="mp-col">{p}</div>' for p in parts])
+            col_html = "".join([f'<div class="mp-col">{p}</div>' for p in parts_html])
             return f'<div class="mp-grid">{col_html}</div>'
     
     text = re.sub(r'(?is):::\s*col-2\n(.*?)\n:::', lambda m: grid_r(m, 2), text)
@@ -712,13 +727,17 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
                 if idx == 0:
                     html += '<thead><tr>'
                     for cell in cells:
-                        html += f'<th style="{th_style}">{cell}</th>'
+                        # Process markdown in header cells
+                        cell_html = markdown.markdown(cell)
+                        html += f'<th style="{th_style}">{cell_html}</th>'
                     html += '</tr></thead><tbody>'
                 else:
                     row_bg = tr_even_style if idx % 2 == 0 else ""
                     html += f'<tr style="{row_bg}">'
                     for cell in cells:
-                        html += f'<td style="{td_style}">{cell}</td>'
+                        # Process markdown in data cells
+                        cell_html = markdown.markdown(cell)
+                        html += f'<td style="{td_style}">{cell_html}</td>'
                     html += '</tr>'
             html += '</tbody></table>'
         else:
@@ -732,13 +751,17 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
                 if idx == 0:
                     html += '<thead><tr>'
                     for cell in cells:
-                        html += f'<th style="{th_style}">{cell}</th>'
+                        # Process markdown in header cells
+                        cell_html = markdown.markdown(cell)
+                        html += f'<th style="{th_style}">{cell_html}</th>'
                     html += '</tr></thead><tbody>'
                 else:
                     row_bg = tr_even_style if idx % 2 == 0 else ""
                     html += f'<tr style="{row_bg}">'
                     for cell in cells:
-                        html += f'<td>{cell}</td>'
+                        # Process markdown in data cells
+                        cell_html = markdown.markdown(cell)
+                        html += f'<td>{cell_html}</td>'
                     html += '</tr>'
             html += '</tbody></table>'
         return html
@@ -762,27 +785,52 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
     # Syntax: ::: card \n ## Title \n Content \n :::
     def card_r(m):
         content = m.group(1).strip()
-        # Extract header (first ## line) and body (rest)
+        # Process content similar to hero - extract first non-empty line as header
         lines = content.split('\n')
+        
         header = None
         body_lines = []
         
-        for line in lines:
+        for i, line in enumerate(lines):
             line_stripped = line.strip()
-            if line_stripped.startswith('##') and header is None:
-                header = line_stripped.lstrip('#').strip()
-            elif line_stripped:  # Only add non-empty lines to body
+            if not line_stripped:
+                continue
+            
+            # First non-empty line becomes the header
+            if header is None:
+                # If line starts with ##, remove the markers
+                if line_stripped.startswith('##'):
+                    header = line_stripped.lstrip('#').strip()
+                elif line_stripped.startswith('#'):
+                    # Handle single # as well
+                    header = line_stripped.lstrip('#').strip()
+                else:
+                    # Use the first line as header directly
+                    header = line_stripped
+            else:
+                # Remaining lines go to body
                 body_lines.append(line)
         
         body = '\n'.join(body_lines).strip()
         h_col = s.get("card_h_color", "#007aff")
         
+        # Process markdown in header and body
+        header_html = markdown.markdown(header) if header else ""
+        body_html = markdown.markdown(body) if body else ""
+        
+        # If no header found (empty content), don't show header
+        if not header:
+            if mode=="wechat": 
+                return f'<section style="{s["card"]}"><div>{body_html}</div></section>'
+            else: 
+                return f'<div class="mp-card">{body_html}</div>'
+        
         if mode=="wechat": 
             return (f'<section style="{s["card"]}">'
-                    f'<span style="font-weight:bold; font-size:16px; color:{h_col}">{header or "Card"}</span>'
-                    f'<div style="margin-top:8px">{body}</div></section>')
+                    f'<span style="font-weight:bold; font-size:16px; color:{h_col}">{header_html}</span>'
+                    f'<div style="margin-top:8px">{body_html}</div></section>')
         else: 
-            return f'<div class="mp-card"><h3>{header or "Card"}</h3>{body}</div>'
+            return f'<div class="mp-card"><h3>{header_html}</h3>{body_html}</div>'
     
     # Card component - handle multiline content properly
     text = re.sub(r'(?is):::\s*card\s*\n(.*?)\n:::', card_r, text)
