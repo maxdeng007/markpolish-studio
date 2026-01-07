@@ -762,27 +762,48 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
     # Syntax: ::: card \n ## Title \n Content \n :::
     def card_r(m):
         content = m.group(1).strip()
-        # Extract header (first ## line) and body (rest)
+        # Process content similar to hero - extract first non-empty line as header
         lines = content.split('\n')
+        
         header = None
         body_lines = []
         
-        for line in lines:
+        for i, line in enumerate(lines):
             line_stripped = line.strip()
-            if line_stripped.startswith('##') and header is None:
-                header = line_stripped.lstrip('#').strip()
-            elif line_stripped:  # Only add non-empty lines to body
+            if not line_stripped:
+                continue
+            
+            # First non-empty line becomes the header
+            if header is None:
+                # If line starts with ##, remove the markers
+                if line_stripped.startswith('##'):
+                    header = line_stripped.lstrip('#').strip()
+                elif line_stripped.startswith('#'):
+                    # Handle single # as well
+                    header = line_stripped.lstrip('#').strip()
+                else:
+                    # Use the first line as header directly
+                    header = line_stripped
+            else:
+                # Remaining lines go to body
                 body_lines.append(line)
         
         body = '\n'.join(body_lines).strip()
         h_col = s.get("card_h_color", "#007aff")
         
+        # If no header found (empty content), don't show header
+        if not header:
+            if mode=="wechat": 
+                return f'<section style="{s["card"]}"><div>{body}</div></section>'
+            else: 
+                return f'<div class="mp-card">{body}</div>'
+        
         if mode=="wechat": 
             return (f'<section style="{s["card"]}">'
-                    f'<span style="font-weight:bold; font-size:16px; color:{h_col}">{header or "Card"}</span>'
+                    f'<span style="font-weight:bold; font-size:16px; color:{h_col}">{header}</span>'
                     f'<div style="margin-top:8px">{body}</div></section>')
         else: 
-            return f'<div class="mp-card"><h3>{header or "Card"}</h3>{body}</div>'
+            return f'<div class="mp-card"><h3>{header}</h3>{body}</div>'
     
     # Card component - handle multiline content properly
     text = re.sub(r'(?is):::\s*card\s*\n(.*?)\n:::', card_r, text)
