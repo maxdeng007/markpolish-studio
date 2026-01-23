@@ -675,6 +675,15 @@ def insert_component_at_position(content, component_template, position):
 def clean_for_wechat(html):
     """Clean HTML for WeChat compatibility"""
     html = html.replace('<img', '<img data-fmt="png"')
+    
+    # Remove all class attributes (WeChat doesn't support CSS classes, only inline styles)
+    # Pattern matches: class="...", class='...', class=..., with or without spaces
+    html = re.sub(r'\s+class\s*=\s*["\'][^"\']*["\']', '', html, flags=re.IGNORECASE)
+    html = re.sub(r'\s+class\s*=\s*[^\s>]+', '', html, flags=re.IGNORECASE)
+    # Clean up any double spaces or spaces before closing bracket
+    html = re.sub(r'\s{2,}', ' ', html)  # Multiple spaces to single space
+    html = re.sub(r'\s+>', '>', html)  # Space before closing bracket
+    
     # First, add styles to images
     html = re.sub(r'(<img[^>]+style=")([^"]+")', r'\1max-width:100% !important; height:auto !important; box-sizing: border-box; \2', html)
     html = re.sub(r'(<img(?!.*style=)[^>]+)>', r'\1 style="max-width:100% !important; height:auto !important; display:block; margin: 12px auto; box-sizing: border-box;">', html)
