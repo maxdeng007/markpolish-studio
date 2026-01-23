@@ -192,9 +192,26 @@ def get_preview_css(theme, mode="Mobile"):
     
     .mp-center {{
         text-align: center !important;
-        margin: 20px 0 !important;
+        margin: 16px 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+    }}
+    .mp-center *,
+    .mp-center p,
+    .mp-center h1,
+    .mp-center h2,
+    .mp-center h3,
+    .mp-center h4,
+    .mp-center h5,
+    .mp-center h6 {{
+        text-align: center !important;
+        background: transparent !important;
+        box-shadow: none !important;
     }}
     
     .mp-grid {{

@@ -92,12 +92,29 @@ MP_CSS_STYLES = """
     font-size: 16px;
 }
 
-/* Center Align Component */
+/* Center Align Component - Plain text, no background/shadow */
 .mp-center {
-    text-align: center;
-    margin: 20px 0;
+    text-align: center !important;
+    margin: 16px 0;
     width: 100%;
     box-sizing: border-box;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+.mp-center *,
+.mp-center p,
+.mp-center h1,
+.mp-center h2,
+.mp-center h3,
+.mp-center h4,
+.mp-center h5,
+.mp-center h6 {
+    text-align: center !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 /* Grid Layout Components */
@@ -852,10 +869,11 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
         # Process markdown in content
         content_html = markdown.markdown(content) if content else ""
         
+        # Plain text with center alignment - no background, no shadow, just centered text
         if mode=="wechat": 
-            return f'<section style="text-align: center; margin: 20px 0; display: block; width: 100%;">{content_html}</section>'
+            return f'<div style="text-align: center !important; margin: 16px 0; width: 100%; display: block; background: transparent; box-shadow: none; padding: 0;">{content_html}</div>'
         else: 
-            return f'<div class="mp-center" style="text-align: center; margin: 20px 0; width: 100%;">{content_html}</div>'
+            return f'<div class="mp-center" style="text-align: center !important; margin: 16px 0; width: 100%; background: transparent; box-shadow: none; padding: 0;">{content_html}</div>'
     
     # Center component - handle multiline content properly
     text = re.sub(r'(?is):::\s*center\s*\n(.*?)\n:::', center_r, text)

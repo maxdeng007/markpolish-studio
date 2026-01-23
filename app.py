@@ -4098,7 +4098,12 @@ Right column
                         .mp-wechat .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center !important; border-radius: {radius}; margin: 0 0 25px 0; box-shadow: inherit;}}
                         .mp-wechat .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius}; box-shadow: inherit;}}
                         .mp-wechat .mp-card h3 {{margin-top: 0; color: {primary};}}
-                        .mp-wechat .mp-center {{text-align: center; margin: 20px 0; width: 100%; box-sizing: border-box;}}
+                        .mp-wechat .mp-center {{text-align: center !important; margin: 16px 0; width: 100%; box-sizing: border-box; background: transparent !important; box-shadow: none !important; padding: 0 !important; border: none !important; border-radius: 0 !important;}}
+                        .mp-wechat .mp-center *,
+                        .mp-wechat .mp-center p,
+                        .mp-wechat .mp-center h1,
+                        .mp-wechat .mp-center h2,
+                        .mp-wechat .mp-center h3 {{text-align: center !important; background: transparent !important; box-shadow: none !important;}}
                         .mp-wechat .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0;}}
                         .mp-wechat .mp-col {{flex: 1; background: {card_bg}; padding: 10px; border-radius: {radius}; box-shadow: inherit; min-width: 0;}}
                         .mp-wechat .mp-step {{display: flex; gap: 12px; margin-bottom: 15px; align-items: center;}}
@@ -4206,8 +4211,13 @@ Right column
         .mp-card{{background:{card_bg};border-left:4px solid {primary};padding:15px;margin:20px 0;border-radius:{radius};box-shadow:{shadow};box-sizing:border-box;}}
         .mp-card h3{{margin-top:0;font-size:16px;color:{primary};}}
         
-        /* Center Align Component */
-        .mp-center{{text-align:center;margin:20px 0;width:100%;box-sizing:border-box;}}
+        /* Center Align Component - Plain text, no background/shadow */
+        .mp-center{{text-align:center !important;margin:16px 0;width:100%;box-sizing:border-box;background:transparent !important;box-shadow:none !important;padding:0 !important;border:none !important;border-radius:0 !important;}}
+        .mp-center *,
+        .mp-center p,
+        .mp-center h1,
+        .mp-center h2,
+        .mp-center h3{{text-align:center !important;background:transparent !important;box-shadow:none !important;}}
         
         /* Grid Layout */
         .mp-grid{{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap;}}
@@ -4316,7 +4326,12 @@ Right column
                         .mp-fallback .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center !important; border-radius: {radius};}}
                         .mp-fallback .mp-hero h1 {{text-align: center !important;}}
                         .mp-fallback .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius};}}
-                        .mp-fallback .mp-center {{text-align: center; margin: 20px 0; width: 100%; box-sizing: border-box;}}
+                        .mp-fallback .mp-center {{text-align: center !important; margin: 16px 0; width: 100%; box-sizing: border-box; background: transparent !important; box-shadow: none !important; padding: 0 !important; border: none !important; border-radius: 0 !important;}}
+                        .mp-fallback .mp-center *,
+                        .mp-fallback .mp-center p,
+                        .mp-fallback .mp-center h1,
+                        .mp-fallback .mp-center h2,
+                        .mp-fallback .mp-center h3 {{text-align: center !important; background: transparent !important; box-shadow: none !important;}}
                         .mp-fallback .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap;}}
                         .mp-fallback .mp-col {{flex: 1; background: {card_bg}; padding: 10px; border-radius: {radius};}}
                         .mp-fallback .mp-step {{display: flex; gap: 12px; margin-bottom: 15px;}}
