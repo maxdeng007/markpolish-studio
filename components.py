@@ -869,11 +869,31 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
         # Process markdown in content
         content_html = markdown.markdown(content) if content else ""
         
+        # Fix any <p> tags inside to have center alignment (override justify)
+        # Replace text-align: justify with text-align: center in all <p> tags
+        content_html = re.sub(
+            r'(<p[^>]*style="[^"]*text-align:\s*justify[^"]*")',
+            lambda m: m.group(1).replace('text-align: justify', 'text-align: center !important'),
+            content_html
+        )
+        # If <p> has style but no text-align, add center alignment
+        content_html = re.sub(
+            r'(<p[^>]*style="([^"]*)")',
+            lambda m: m.group(1) if 'text-align' in m.group(2) else m.group(1).replace('style="', 'style="text-align: center !important; '),
+            content_html
+        )
+        # If <p> has no style attribute, add one
+        content_html = re.sub(
+            r'(<p)([^>]*)(>)',
+            lambda m: f'{m.group(1)}{m.group(2)} style="text-align: center !important;"{m.group(3)}' if 'style=' not in m.group(2) else m.group(0),
+            content_html
+        )
+        
         # Plain text with center alignment - no background, no shadow, just centered text
         if mode=="wechat": 
-            return f'<div style="text-align: center !important; margin: 16px 0; width: 100%; display: block; background: transparent; box-shadow: none; padding: 0;">{content_html}</div>'
+            return f'<div style="text-align: center !important; margin: 16px 0; width: 100%; display: block; background: transparent !important; box-shadow: none !important; padding: 0 !important; border: none !important;">{content_html}</div>'
         else: 
-            return f'<div class="mp-center" style="text-align: center !important; margin: 16px 0; width: 100%; background: transparent; box-shadow: none; padding: 0;">{content_html}</div>'
+            return f'<div class="mp-center" style="text-align: center !important; margin: 16px 0; width: 100%; background: transparent !important; box-shadow: none !important; padding: 0 !important; border: none !important;">{content_html}</div>'
     
     # Center component - handle multiline content properly
     text = re.sub(r'(?is):::\s*center\s*\n(.*?)\n:::', center_r, text)

@@ -439,6 +439,50 @@ def get_inline_styles(theme):
 def deep_inject_styles(html_content, styles):
     """Inject inline styles into HTML content - handles tags with or without attributes"""
     
+    # First, fix any <p> tags inside center components (both class="mp-center" and inline style versions)
+    # This must happen BEFORE we inject styles, so center alignment isn't overridden
+    def fix_center_paragraphs(match):
+        """Fix paragraphs inside center components"""
+        center_content = match.group(2) if match.lastindex >= 2 else match.group(1)
+        # Replace text-align: justify with center in all <p> tags inside
+        center_content = re.sub(
+            r'(<p[^>]*style="[^"]*text-align:\s*justify[^"]*")',
+            lambda m: m.group(1).replace('text-align: justify', 'text-align: center !important'),
+            center_content
+        )
+        # Add center alignment to <p> tags without text-align
+        center_content = re.sub(
+            r'(<p)([^>]*style="([^"]*)")',
+            lambda m: f'{m.group(1)}{m.group(2)}' if 'text-align' in m.group(3) else f'{m.group(1)} style="text-align: center !important; {m.group(3)}"',
+            center_content
+        )
+        # Add style to <p> tags without any style attribute
+        center_content = re.sub(
+            r'(<p)([^>]*)(>)',
+            lambda m: f'{m.group(1)} style="text-align: center !important;"{m.group(2)}{m.group(3)}' if 'style=' not in m.group(2) else m.group(0),
+            center_content
+        )
+        if match.lastindex >= 2:
+            return f'<div class="mp-center"{match.group(1)}>{center_content}</div>'
+        else:
+            return f'<div{match.group(1)}>{center_content}</div>'
+    
+    # Fix center components (both class and inline style versions) before injecting styles
+    # Pattern 1: class="mp-center"
+    html_content = re.sub(
+        r'<div\s+class="mp-center"([^>]*)>(.*?)</div>',
+        fix_center_paragraphs,
+        html_content,
+        flags=re.DOTALL | re.IGNORECASE
+    )
+    # Pattern 2: inline style with text-align: center
+    html_content = re.sub(
+        r'(<div[^>]*style="[^"]*text-align:\s*center\s*!important[^"]*"[^>]*>)(.*?)(</div>)',
+        fix_center_paragraphs,
+        html_content,
+        flags=re.DOTALL | re.IGNORECASE
+    )
+    
     def add_style_to_tag(match, tag_name, style_value):
         """Add inline style to an HTML tag while preserving existing attributes"""
         tag_content = match.group(1) if match.group(1) else ""
@@ -448,6 +492,9 @@ def deep_inject_styles(html_content, styles):
             existing_style_match = re.search(r'style="([^"]*)"', tag_content)
             if existing_style_match:
                 existing_style = existing_style_match.group(1)
+                # Don't override if text-align: center !important is already there
+                if 'text-align: center !important' in existing_style:
+                    return match.group(0)
                 if style_value.strip() in existing_style:
                     return match.group(0)
                 new_style = existing_style.rstrip(';') + "; " + style_value
