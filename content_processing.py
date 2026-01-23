@@ -604,10 +604,11 @@ def insert_component_at_position(content, component_template, position):
 def clean_for_wechat(html):
     """Clean HTML for WeChat compatibility"""
     html = html.replace('<img', '<img data-fmt="png"')
-    # Replace existing margin: 12px 0 with margin: 12px auto for centering
-    html = re.sub(r'margin:\s*12px\s+0', 'margin: 12px auto', html)
+    # First, add styles to images
     html = re.sub(r'(<img[^>]+style=")([^"]+")', r'\1max-width:100% !important; height:auto !important; box-sizing: border-box; \2', html)
     html = re.sub(r'(<img(?!.*style=)[^>]+)>', r'\1 style="max-width:100% !important; height:auto !important; display:block; margin: 12px auto; box-sizing: border-box;">', html)
+    # Then, replace ALL instances of margin: 12px 0 with margin: 12px auto (must be last to catch all cases)
+    html = re.sub(r'margin:\s*12px\s+0\s*;?', 'margin: 12px auto;', html)
     if "<body" in html:
         start = html.find("<body")
         start = html.find(">", start) + 1
