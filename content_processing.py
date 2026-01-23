@@ -398,7 +398,7 @@ def get_inline_styles(theme):
         'btn_wrap': "text-align: center; margin: 30px 0;",
         'grid': "display: flex !important; gap: 10px !important; margin: 20px 0 !important; flex-wrap: wrap !important;",
         'col': f"flex: 1 !important; background-color: {card_bg} !important; padding: 10px !important; border-radius: {radius} !important; box-shadow: {shadow} !important; min-width: 0 !important; box-sizing: border-box !important;",
-        'img': f"max-width: 100% !important; width: 100% !important; border-radius: {radius}; display: block; margin: 20px 0; box-shadow: {shadow}; height: auto !important; box-sizing: border-box !important; object-fit: contain !important;",
+        'img': f"max-width: 100% !important; width: 100% !important; border-radius: {radius}; display: block; margin: 20px auto; box-shadow: {shadow}; height: auto !important; box-sizing: border-box !important; object-fit: contain !important;",
         'wrapper': f"background-color: {t['bg']}; padding: 20px; min-height: 100%; box-sizing: border-box;",
         'quote': f"border-left: 4px solid {primary}; padding-left: 15px; color: {t.get('muted', '#666')}; font-style: italic; background: {t.get('accent', '#eee')}; padding: 10px; margin: 20px 0;",
         'ul': "padding-left: 20px; margin-bottom: 16px;",
@@ -604,8 +604,10 @@ def insert_component_at_position(content, component_template, position):
 def clean_for_wechat(html):
     """Clean HTML for WeChat compatibility"""
     html = html.replace('<img', '<img data-fmt="png"')
+    # Replace existing margin: 12px 0 with margin: 12px auto for centering
+    html = re.sub(r'margin:\s*12px\s+0', 'margin: 12px auto', html)
     html = re.sub(r'(<img[^>]+style=")([^"]+")', r'\1max-width:100% !important; height:auto !important; box-sizing: border-box; \2', html)
-    html = re.sub(r'(<img(?!.*style=)[^>]+)>', r'\1 style="max-width:100% !important; height:auto !important; display:block; margin: 12px 0; box-sizing: border-box;">', html)
+    html = re.sub(r'(<img(?!.*style=)[^>]+)>', r'\1 style="max-width:100% !important; height:auto !important; display:block; margin: 12px auto; box-sizing: border-box;">', html)
     if "<body" in html:
         start = html.find("<body")
         start = html.find(">", start) + 1
