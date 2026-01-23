@@ -675,6 +675,11 @@ def insert_component_at_position(content, component_template, position):
 def clean_for_wechat(html):
     """Clean HTML for WeChat compatibility"""
     html = html.replace('<img', '<img data-fmt="png"')
+    
+    # Remove class="mp-center" specifically (WeChat doesn't support classes, shows as plain text)
+    # This is a targeted fix for the center component issue
+    html = re.sub(r'\s+class\s*=\s*["\']mp-center["\']', '', html, flags=re.IGNORECASE)
+    
     # First, add styles to images
     html = re.sub(r'(<img[^>]+style=")([^"]+")', r'\1max-width:100% !important; height:auto !important; box-sizing: border-box; \2', html)
     html = re.sub(r'(<img(?!.*style=)[^>]+)>', r'\1 style="max-width:100% !important; height:auto !important; display:block; margin: 12px auto; box-sizing: border-box;">', html)
