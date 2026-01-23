@@ -678,7 +678,20 @@ def clean_for_wechat(html):
     
     # Remove class="mp-center" specifically (WeChat doesn't support classes, shows as plain text)
     # This is a targeted fix for the center component issue
+    # Use a more careful replacement to avoid breaking HTML structure
+    html = re.sub(r'(<div[^>]*)\s+class\s*=\s*["\']mp-center["\']([^>]*>)', r'\1\2', html, flags=re.IGNORECASE)
+    
+    # Also remove class="mp-center" from any other tags (safety check)
     html = re.sub(r'\s+class\s*=\s*["\']mp-center["\']', '', html, flags=re.IGNORECASE)
+    
+    # Clean up any double spaces or malformed tags that might result
+    html = re.sub(r'<div\s+>', '<div>', html)  # Fix <div  > to <div>
+    html = re.sub(r'<div\s+style', '<div style', html)  # Fix <div  style to <div style
+    html = re.sub(r'<div\s*\n\s*>', '<div>', html)  # Fix <div\n> to <div>
+    html = re.sub(r'</div\s*\n\s*>', '</div>', html)  # Fix </div\n> to </div>
+    
+    # Remove any newlines inside HTML tags that could break WeChat parsing
+    html = re.sub(r'(<[^>]+)\n([^>]*>)', r'\1 \2', html)  # Replace newlines inside tags with space
     
     # First, add styles to images
     html = re.sub(r'(<img[^>]+style=")([^"]+")', r'\1max-width:100% !important; height:auto !important; box-sizing: border-box; \2', html)

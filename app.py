@@ -4065,7 +4065,8 @@ Right column
                             return placeholder
                 
                         # Improved pattern: handles nested tags, ::: components, and various HTML structures
-                        html_pattern = r':::[^:]+:::[^\n]*\n(?:[^\n]+\n)*?:::\s*:::[^\n]*|<(section|div|span|video)[^>]*>.*?</\1>|<(section|div|span|video)[^>]*/\s*>'
+                        # Pattern now better handles divs with inline styles and nested content
+                        html_pattern = r':::[^:]+:::[^\n]*\n(?:[^\n]+\n)*?:::\s*:::[^\n]*|<(section|div|span|video)[^>]*>.*?</\1>|<(section|div|span|video)[^>]*/\s*>|<div[^>]*style="[^"]*"[^>]*>.*?</div>'
                         text_for_markdown = re_module.sub(html_pattern, extract_html, parsed_md, flags=re_module.DOTALL | re_module.IGNORECASE)
                 
                         # Process markdown (HTML comments are preserved)
