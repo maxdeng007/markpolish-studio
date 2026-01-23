@@ -53,6 +53,7 @@ TRANSLATIONS = {
         "comp_timeline": "Timeline",
         "comp_table": "Table",
         "comp_card": "Card",
+        "comp_center": "Center",
         "comp_reveal": "Reveal",
         "comp_badge": "Badge",
         "comp_button": "Button",
@@ -285,6 +286,7 @@ TRANSLATIONS = {
         "comp_timeline": "时间线",
         "comp_table": "表格",
         "comp_card": "卡片",
+        "comp_center": "居中",
         "comp_reveal": "揭示",
         "comp_badge": "标签",
         "comp_button": "按钮",
@@ -2129,6 +2131,11 @@ def main():
                         "syntax": "::: card\n## Card Title\nCard content here.\n:::",
                         "wechat_supported": True,
                     },
+                    {
+                        "name": get_text("comp_center"),
+                        "syntax": "::: center\nCentered text here\n:::",
+                        "wechat_supported": True,
+                    },
                 ],
                 get_text("interactive"): [
                     {
@@ -3016,6 +3023,10 @@ def hello():
                 st.code("""::: hero
 # Title
 Subtitle
+:::
+
+::: center
+Centered text or paragraph
 :::
 
 ::: col-2
@@ -4087,6 +4098,7 @@ Right column
                         .mp-wechat .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center !important; border-radius: {radius}; margin: 0 0 25px 0; box-shadow: inherit;}}
                         .mp-wechat .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius}; box-shadow: inherit;}}
                         .mp-wechat .mp-card h3 {{margin-top: 0; color: {primary};}}
+                        .mp-wechat .mp-center {{text-align: center; margin: 20px 0; width: 100%; box-sizing: border-box;}}
                         .mp-wechat .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0;}}
                         .mp-wechat .mp-col {{flex: 1; background: {card_bg}; padding: 10px; border-radius: {radius}; box-shadow: inherit; min-width: 0;}}
                         .mp-wechat .mp-step {{display: flex; gap: 12px; margin-bottom: 15px; align-items: center;}}
@@ -4193,6 +4205,9 @@ Right column
         /* Card Component */
         .mp-card{{background:{card_bg};border-left:4px solid {primary};padding:15px;margin:20px 0;border-radius:{radius};box-shadow:{shadow};box-sizing:border-box;}}
         .mp-card h3{{margin-top:0;font-size:16px;color:{primary};}}
+        
+        /* Center Align Component */
+        .mp-center{{text-align:center;margin:20px 0;width:100%;box-sizing:border-box;}}
         
         /* Grid Layout */
         .mp-grid{{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap;}}
@@ -4301,6 +4316,7 @@ Right column
                         .mp-fallback .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center !important; border-radius: {radius};}}
                         .mp-fallback .mp-hero h1 {{text-align: center !important;}}
                         .mp-fallback .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius};}}
+                        .mp-fallback .mp-center {{text-align: center; margin: 20px 0; width: 100%; box-sizing: border-box;}}
                         .mp-fallback .mp-grid {{display: flex; gap: 10px; flex-wrap: wrap;}}
                         .mp-fallback .mp-col {{flex: 1; background: {card_bg}; padding: 10px; border-radius: {radius};}}
                         .mp-fallback .mp-step {{display: flex; gap: 12px; margin-bottom: 15px;}}

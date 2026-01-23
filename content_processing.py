@@ -190,6 +190,13 @@ def get_preview_css(theme, mode="Mobile"):
     .mp-card {{ {card_style} }}
     .mp-card h3 {{ margin-top: 0; font-size: 16px; color: {primary_color}; }}
     
+    .mp-center {{
+        text-align: center !important;
+        margin: 20px 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }}
+    
     .mp-grid {{
         display: flex !important;
         gap: 10px !important;

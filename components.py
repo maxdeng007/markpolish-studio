@@ -92,6 +92,14 @@ MP_CSS_STYLES = """
     font-size: 16px;
 }
 
+/* Center Align Component */
+.mp-center {
+    text-align: center;
+    margin: 20px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
 /* Grid Layout Components */
 .mp-grid {
     display: flex;
@@ -291,6 +299,7 @@ COMPONENT_COMPATIBILITY = {
     "badge": {"wechat": True, "html": True},
     "button": {"wechat": True, "html": True},
     "card": {"wechat": True, "html": True},
+    "center": {"wechat": True, "html": True},
     "img": {"wechat": True, "html": True},
     "table": {"wechat": True, "html": True},
     "video": {"wechat": True, "html": True},
@@ -308,6 +317,7 @@ INSERTION_TOOLS = {
     "➕ Badge": "[badge: NEW]",
     "➕ Button": "\n[Button Label](https://link.com)\n",
     "➕ Card": "::: card\n## Card Title\nCard content here.\n:::",
+    "➕ Center": "::: center\nCentered text here\n:::",
     "➕ AI Image": "[IMG: describe your image]"
 }
 
@@ -834,5 +844,20 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
     
     # Card component - handle multiline content properly
     text = re.sub(r'(?is):::\s*card\s*\n(.*?)\n:::', card_r, text)
+    
+    # 11. Center Align Component
+    # Syntax: ::: center \n Content \n :::
+    def center_r(m):
+        content = m.group(1).strip()
+        # Process markdown in content
+        content_html = markdown.markdown(content) if content else ""
+        
+        if mode=="wechat": 
+            return f'<section style="text-align: center; margin: 20px 0; display: block; width: 100%;">{content_html}</section>'
+        else: 
+            return f'<div class="mp-center" style="text-align: center; margin: 20px 0; width: 100%;">{content_html}</div>'
+    
+    # Center component - handle multiline content properly
+    text = re.sub(r'(?is):::\s*center\s*\n(.*?)\n:::', center_r, text)
     
     return text
