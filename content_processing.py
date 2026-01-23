@@ -441,9 +441,9 @@ def deep_inject_styles(html_content, styles):
     
     # First, fix any <p> tags inside center components (both class="mp-center" and inline style versions)
     # This must happen BEFORE we inject styles, so center alignment isn't overridden
-    def fix_center_paragraphs(match):
-        """Fix paragraphs inside center components"""
-        center_content = match.group(2) if match.lastindex >= 2 else match.group(1)
+    def fix_center_paragraphs_class(match):
+        """Fix paragraphs inside center components with class="mp-center" """
+        center_content = match.group(2)
         # Replace text-align: justify with center in all <p> tags inside
         center_content = re.sub(
             r'(<p[^>]*style="[^"]*text-align:\s*justify[^"]*")',
@@ -462,23 +462,46 @@ def deep_inject_styles(html_content, styles):
             lambda m: f'{m.group(1)} style="text-align: center !important;"{m.group(2)}{m.group(3)}' if 'style=' not in m.group(2) else m.group(0),
             center_content
         )
-        if match.lastindex >= 2:
-            return f'<div class="mp-center"{match.group(1)}>{center_content}</div>'
-        else:
-            return f'<div{match.group(1)}>{center_content}</div>'
+        # Return with original div structure (keep class for web mode)
+        return f'<div class="mp-center"{match.group(1)}>{center_content}</div>'
+    
+    def fix_center_paragraphs_inline(match):
+        """Fix paragraphs inside center components with inline styles (WeChat mode)"""
+        opening_tag = match.group(1)  # The opening <div style="..."> tag
+        center_content = match.group(2)  # The content inside
+        closing_tag = match.group(3)  # The closing </div> tag
+        
+        # Fix <p> tags inside - same logic as above
+        center_content = re.sub(
+            r'(<p[^>]*style="[^"]*text-align:\s*justify[^"]*")',
+            lambda m: m.group(1).replace('text-align: justify', 'text-align: center !important'),
+            center_content
+        )
+        center_content = re.sub(
+            r'(<p)([^>]*style="([^"]*)")',
+            lambda m: f'{m.group(1)}{m.group(2)}' if 'text-align' in m.group(3) else f'{m.group(1)} style="text-align: center !important; {m.group(3)}"',
+            center_content
+        )
+        center_content = re.sub(
+            r'(<p)([^>]*)(>)',
+            lambda m: f'{m.group(1)} style="text-align: center !important;"{m.group(2)}{m.group(3)}' if 'style=' not in m.group(2) else m.group(0),
+            center_content
+        )
+        # Return with original div structure - DON'T wrap in another div!
+        return f'{opening_tag}{center_content}{closing_tag}'
     
     # Fix center components (both class and inline style versions) before injecting styles
-    # Pattern 1: class="mp-center"
+    # Pattern 1: class="mp-center" (web mode)
     html_content = re.sub(
         r'<div\s+class="mp-center"([^>]*)>(.*?)</div>',
-        fix_center_paragraphs,
+        fix_center_paragraphs_class,
         html_content,
         flags=re.DOTALL | re.IGNORECASE
     )
-    # Pattern 2: inline style with text-align: center
+    # Pattern 2: inline style with text-align: center (WeChat mode) - DON'T wrap, just fix content
     html_content = re.sub(
         r'(<div[^>]*style="[^"]*text-align:\s*center\s*!important[^"]*"[^>]*>)(.*?)(</div>)',
-        fix_center_paragraphs,
+        fix_center_paragraphs_inline,
         html_content,
         flags=re.DOTALL | re.IGNORECASE
     )
@@ -675,6 +698,10 @@ def insert_component_at_position(content, component_template, position):
 def clean_for_wechat(html):
     """Clean HTML for WeChat compatibility"""
     html = html.replace('<img', '<img data-fmt="png"')
+    
+    # Fix malformed tags like <div<div (should never happen, but safety check)
+    html = re.sub(r'<div<div', '<div', html, flags=re.IGNORECASE)
+    html = re.sub(r'<div\s+<div', '<div', html, flags=re.IGNORECASE)
     
     # Remove class="mp-center" specifically (WeChat doesn't support classes, shows as plain text)
     # This is a targeted fix for the center component issue
