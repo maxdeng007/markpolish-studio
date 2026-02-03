@@ -5,9 +5,9 @@ A powerful Streamlit-based content creation and editing tool for creating beauti
 ## What's New (Latest Updates)
 
 ### 🎨 Enhanced Image System
-- **8 Beautiful Gradient Styles**: Blue, Purple, Sunset, Ocean, Forest, Aurora, Fire, Midnight
-- **Real Pattern Backgrounds**: Polka dots and diagonal lines patterns with grey tones
-- **Consistent 16:9 Ratio**: All images now use 800x450 (16:9) aspect ratio
+- **Z-Image-Turbo + ModelScope**: New AI image providers with API key support
+- **Image Ratio Control**: 1:1, 16:9, 9:16 for AI, Picsum, and Placeholder
+- **Daily Quotas**: Built-in limits for AI image generation
 - **Auto-Render**: Preview updates automatically when Image Source changes
 
 ### 🤖 AI Actions - Now Fully Working!
@@ -80,6 +80,7 @@ MarkPolish Studio/
 ├── content_processing.py  # Content parsing, markdown processing, preview
 ├── ui_helpers.py         # UI utility functions
 ├── components.py          # Markdown component system
+├── z_image.py             # Z-Image-Turbo (DashScope) AI image client
 ├── themes.py              # Theme definitions
 ├── error_handler.py       # Error handling utilities
 ├── performance.py         # Performance optimization
@@ -165,8 +166,10 @@ Choose from multiple themes optimized for different content types:
 
 ### Image Source Options
 
-Choose from multiple image sources:
-- **Pollinations (AI)** - AI-generated images from text prompts
+Choose from multiple image sources. AI providers need API keys in Secrets (Cloud) or `.env` (local).
+
+- **Z-Image-Turbo (AI)** (default) - AI images via DashScope; set `DASHSCOPE_API_KEY`
+- **ModelScope (AI)** - AI images via 魔搭 (higher free quota); set `MODELSCOPE_API_KEY` from [modelscope.cn/my/myaccesstoken](https://modelscope.cn/my/myaccesstoken)
 - **Picsum (Stock)** - Random high-quality stock photos
 - **Placeholder (Text)** - Text placeholders for layout planning
 - **Gradients (8 styles)** - Beautiful CSS gradients: Blue, Purple, Sunset, Ocean, Forest, Aurora, Fire, Midnight
@@ -174,7 +177,7 @@ Choose from multiple image sources:
 
 ### Export Options
 
-- **HTML Export**: Export as clean HTML
+- **HTML Export**: Export as clean HTML or copy HTML code
 - **PDF Export**: Export as PDF (requires PDF library)
 - **WeChat Format**: Optimized for WeChat publishing
 
@@ -218,8 +221,10 @@ Configure AI settings in the sidebar using the new Provider Manager:
 
 ### Image Source Options
 
-Choose from multiple image sources for your content:
-- **Pollinations (AI)** - AI-generated images from text prompts
+Choose from multiple image sources for your content. Set API keys in [Streamlit Secrets](https://docs.streamlit.io/streamlit-community-cloud/deploy-your-app/secrets-management) (Cloud) or in a `.env` file (local).
+
+- **Z-Image-Turbo (AI)** (default) - AI images via DashScope; requires `DASHSCOPE_API_KEY`
+- **ModelScope (AI)** - AI images via [魔搭 ModelScope](https://modelscope.cn/models/Tongyi-MAI/Z-Image-Turbo) (e.g. higher free quota); requires `MODELSCOPE_API_KEY` from [modelscope.cn/my/myaccesstoken](https://modelscope.cn/my/myaccesstoken)
 - **Picsum (Stock)** - Random high-quality stock photos
 - **Placeholder (Text)** - Text placeholders for layout planning
 - **Gradients (8 styles)** - Beautiful CSS gradients:
@@ -235,7 +240,9 @@ Choose from multiple image sources for your content:
   - Pattern (Dots) - Polka dots pattern on grey background
   - Pattern (Lines) - Diagonal lines pattern on grey background
 
-All images use consistent 800x450 (16:9) aspect ratio for visual consistency.
+Aspect ratio is selectable (1:1, 16:9, 9:16) for AI images, Picsum, and Placeholder.
+
+**Image API keys (ModelScope 魔搭):** To use **ModelScope (AI)** (魔搭), get your token from [modelscope.cn/my/myaccesstoken](https://modelscope.cn/my/myaccesstoken), then set `MODELSCOPE_API_KEY` in Streamlit Secrets (Cloud) or in a `.env` file (local), e.g. `MODELSCOPE_API_KEY=your-token`. No extra config on the ModelScope website is required.
 
 Install at least one PDF library:
 ```bash

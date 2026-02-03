@@ -9,6 +9,7 @@ python-docx>=0.8.11
 # Optional: AI Integration
 openai>=1.0.0
 httpx>=0.24.0
+python-dotenv>=1.0.0
 
 # Optional: PDF Generation (install at least one)
 # Recommended: reportlab (pure Python, most reliable)

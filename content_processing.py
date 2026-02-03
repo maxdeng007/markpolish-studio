@@ -554,7 +554,7 @@ def deep_inject_styles(html_content, styles):
     return html_content
 
 
-def parse_doc(text, styles, img_provider="Pollinations (AI)", mode="wechat"):
+def parse_doc(text, styles, img_provider="ModelScope (AI)", img_ratio="1:1", mode="wechat"):
     """Parse document with components and plugins"""
     # IMPORTANT: Process order matters!
     # 1. Apply plugins FIRST (convert ::: callout to HTML)
@@ -573,7 +573,7 @@ def parse_doc(text, styles, img_provider="Pollinations (AI)", mode="wechat"):
     
     # Then apply built-in components (converts remaining markdown to HTML)
     if apply_components:
-        result = apply_components(text, styles, mode=mode, img_provider=img_provider)
+        result = apply_components(text, styles, mode=mode, img_provider=img_provider, img_ratio=img_ratio)
     else:
         result = text
     
