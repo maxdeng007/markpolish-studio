@@ -28,6 +28,29 @@ except ImportError:
     def load_image_from_library(filename):
         return None
 
+# Z-Image-Turbo: DashScope and ModelScope (魔搭) for AI image generation
+try:
+    from z_image import (
+        generate_image as z_image_generate,
+        generate_image_modelscope,
+        get_dashscope_api_key,
+        get_modelscope_api_key,
+        IMAGE_SIZE_PRESETS,
+    )
+except ImportError:
+    z_image_generate = None
+    generate_image_modelscope = None
+    get_dashscope_api_key = None
+    get_modelscope_api_key = None
+    IMAGE_SIZE_PRESETS = {"1:1": "1024*1024", "16:9": "1280*720", "9:16": "720*1280"}
+
+# Daily usage limits for AI image providers
+try:
+    from ai_image_usage import is_over_limit as ai_usage_is_over_limit, increment_usage as ai_usage_increment
+except ImportError:
+    ai_usage_is_over_limit = lambda _: False
+    ai_usage_increment = lambda _: None
+
 # Check for PDF libraries
 HAS_WEASYPRINT = False
 HAS_PDFKIT = False
@@ -341,22 +364,92 @@ def clean_text_for_pdf(text):
     return ''.join(cleaned)
 
 
-def extract_image_url(markdown_text, img_provider="Pollinations (AI)"):
+def extract_image_url(markdown_text, img_provider="ModelScope (AI)", img_ratio="1:1"):
     """Extract image URLs from [IMG:...] and [LOCAL:...] shortcodes"""
     images = {}
-    
-    # Extract [IMG: prompt] - convert to URL
+    size_str = IMAGE_SIZE_PRESETS.get(img_ratio, "1024*1024") if img_ratio else "1024*1024"
+
+    # Width/height from ratio for Picsum and Placeholder (same ratio logic as AI images)
+    def _w_h_from_ratio():
+        if "*" in size_str:
+            parts = size_str.strip().split("*", 1)
+            try:
+                return int(parts[0].strip()), int(parts[1].strip())
+            except (ValueError, IndexError):
+                pass
+        return 800, 450
+
+    # Extract [IMG: prompt] - convert to URL or data URI
     def img_repl(m):
         prompt = m.group(1).strip()
         encoded = urllib.parse.quote(prompt)
         seed = random.randint(0, 9999)
-        
-        if img_provider == "Picsum (Stock)":
-            url = f"https://picsum.photos/seed/{seed}/800/450"
+        img_w, img_h = _w_h_from_ratio()
+
+        if img_provider == "Z-Image-Turbo (AI)":
+            cache = st.session_state.get("ai_image_cache", {})
+            cache_key = f"{img_provider}|{img_ratio}|{prompt}"
+            url = cache.get(cache_key)
+            if not url and z_image_generate:
+                if ai_usage_is_over_limit(img_provider):
+                    try:
+                        st.session_state["ai_image_limit_reached"] = img_provider
+                    except Exception:
+                        pass
+                    url = f"https://placehold.co/{img_w}x{img_h}/EEE/31343C?text={encoded}"
+                else:
+                    api_key = get_dashscope_api_key() if get_dashscope_api_key else None
+                    url = z_image_generate(prompt, api_key=api_key, size=size_str)
+                    if url:
+                        ai_usage_increment(img_provider)
+                        try:
+                            st.session_state["ai_image_quota_just_updated"] = True
+                        except Exception:
+                            pass
+                        if "ai_image_cache" not in st.session_state:
+                            st.session_state["ai_image_cache"] = {}
+                        st.session_state["ai_image_cache"][cache_key] = url
+                        while len(st.session_state["ai_image_cache"]) > 30:
+                            k = next(iter(st.session_state["ai_image_cache"]))
+                            del st.session_state["ai_image_cache"][k]
+            key = f"[IMG:{prompt}]"
+            images[key] = url if url else f"https://placehold.co/{img_w}x{img_h}/EEE/31343C?text={encoded}"
+            return key
+        elif img_provider == "ModelScope (AI)":
+            cache = st.session_state.get("ai_image_cache", {})
+            cache_key = f"{img_provider}|{img_ratio}|{prompt}"
+            url = cache.get(cache_key)
+            if not url and generate_image_modelscope:
+                if ai_usage_is_over_limit(img_provider):
+                    try:
+                        st.session_state["ai_image_limit_reached"] = img_provider
+                    except Exception:
+                        pass
+                    url = f"https://placehold.co/{img_w}x{img_h}/EEE/31343C?text={encoded}"
+                else:
+                    api_key = get_modelscope_api_key() if get_modelscope_api_key else None
+                    url = generate_image_modelscope(prompt, api_key=api_key, size=size_str)
+                    if url:
+                        ai_usage_increment(img_provider)
+                        try:
+                            st.session_state["ai_image_quota_just_updated"] = True
+                        except Exception:
+                            pass
+                        if "ai_image_cache" not in st.session_state:
+                            st.session_state["ai_image_cache"] = {}
+                        st.session_state["ai_image_cache"][cache_key] = url
+                        while len(st.session_state["ai_image_cache"]) > 30:
+                            k = next(iter(st.session_state["ai_image_cache"]))
+                            del st.session_state["ai_image_cache"][k]
+            key = f"[IMG:{prompt}]"
+            images[key] = url if url else f"https://placehold.co/{img_w}x{img_h}/EEE/31343C?text={encoded}"
+            return key
+        elif img_provider == "Picsum (Stock)":
+            url = f"https://picsum.photos/seed/{seed}/{img_w}/{img_h}"
         elif img_provider == "Placeholder (Text)":
-            url = f"https://placehold.co/800x450/EEE/31343C?text={encoded}"
+            url = f"https://placehold.co/{img_w}x{img_h}/EEE/31343C?text={encoded}"
         else:
-            url = f"https://image.pollinations.ai/prompt/{encoded}?width=800&height=450&nologo=true&seed={seed}"
+            url = f"https://placehold.co/{img_w}x{img_h}/EEE/31343C?text={encoded}"
         
         key = f"[IMG:{prompt}]"
         images[key] = url
@@ -473,7 +566,7 @@ def markdown_to_pdf_elements(markdown_text, images_dict=None):
     return elements
 
 
-def generate_pdf(html_content, theme, output_path=None, markdown_source=None, img_provider="Pollinations (AI)"):
+def generate_pdf(html_content, theme, output_path=None, markdown_source=None, img_provider="ModelScope (AI)", img_ratio="1:1"):
     """Generate PDF from HTML content with theme styling"""
     if not HAS_WEASYPRINT and not HAS_PDFKIT and not HAS_XHTML2PDF and not HAS_REPORTLAB:
         return None, "PDF library not installed. Install: python3 -m pip install reportlab"
@@ -658,7 +751,7 @@ def generate_pdf(html_content, theme, output_path=None, markdown_source=None, im
             # Extract images from markdown if available
             images_dict = {}
             if markdown_source:
-                images_dict = extract_image_url(markdown_source, img_provider)
+                images_dict = extract_image_url(markdown_source, img_provider, img_ratio)
             
             # Prefer HTML parsing (since parsed_md is already processed to HTML)
             # Extract images from HTML first
@@ -669,7 +762,7 @@ def generate_pdf(html_content, theme, output_path=None, markdown_source=None, im
             
             # Also try markdown parsing as fallback for shortcodes
             if markdown_source:
-                md_images = extract_image_url(markdown_source, img_provider)
+                md_images = extract_image_url(markdown_source, img_provider, img_ratio)
                 # Merge markdown images into images_dict
                 images_dict.update(md_images)
             

@@ -14,6 +14,65 @@ except ImportError:
     load_image_from_library = None
     get_image_library = None
 
+# Z-Image-Turbo: DashScope and ModelScope (魔搭) for AI image generation
+try:
+    from z_image import (
+        generate_image as z_image_generate,
+        generate_image_modelscope,
+        get_dashscope_api_key,
+        get_modelscope_api_key,
+        IMAGE_SIZE_PRESETS,
+    )
+except ImportError:
+    z_image_generate = None
+    generate_image_modelscope = None
+    get_dashscope_api_key = None
+    get_modelscope_api_key = None
+    IMAGE_SIZE_PRESETS = {"1:1": "1024*1024", "16:9": "1280*720", "9:16": "720*1280"}
+
+# Daily usage limits for AI image providers
+try:
+    from ai_image_usage import (
+        is_over_limit as ai_usage_is_over_limit,
+        increment_usage as ai_usage_increment,
+        get_remaining as ai_usage_get_remaining,
+    )
+except ImportError:
+    ai_usage_is_over_limit = lambda _: False
+    ai_usage_increment = lambda _: None
+    ai_usage_get_remaining = lambda _: None
+
+# Per-prompt cache for AI images: only re-generate when [IMG: prompt] or provider changes
+AI_IMAGE_CACHE_MAX = 30
+
+
+def _get_ai_image_cache():
+    """Get or init session cache for AI-generated images (key -> data URI)."""
+    if "ai_image_cache" not in st.session_state:
+        st.session_state["ai_image_cache"] = {}
+    return st.session_state["ai_image_cache"]
+
+
+def _ai_image_cache_key(provider: str, prompt: str, img_ratio: str = "1:1") -> str:
+    return f"{provider}|{img_ratio}|{prompt.strip()}"
+
+
+def _get_cached_ai_image(provider: str, prompt: str, img_ratio: str = "1:1"):
+    """Return cached data URI if present, else None."""
+    cache = _get_ai_image_cache()
+    key = _ai_image_cache_key(provider, prompt, img_ratio)
+    return cache.get(key)
+
+
+def _set_cached_ai_image(provider: str, prompt: str, data_uri: str, img_ratio: str = "1:1") -> None:
+    """Store data URI in cache; evict oldest if over limit."""
+    cache = _get_ai_image_cache()
+    key = _ai_image_cache_key(provider, prompt, img_ratio)
+    cache[key] = data_uri
+    while len(cache) > AI_IMAGE_CACHE_MAX:
+        oldest = next(iter(cache))
+        del cache[oldest]
+
 # --- CSS CONSTANTS FOR CMS-COMPATIBLE OUTPUT ---
 # These are injected into the preview/HTML output for consistent styling
 MP_CSS_STYLES = """
@@ -339,7 +398,7 @@ INSERTION_TOOLS = {
 }
 
 # --- 2. PARSING ENGINE ---
-def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)"):
+def apply_components(text, styles, mode="web", img_provider="ModelScope (AI)", img_ratio="1:1"):
     s = styles
     # Helper: Styles for WeChat images
     img_s = f'style="{s["img"]}"' if mode=="wechat" else ''
@@ -407,12 +466,83 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
         encoded = urllib.parse.quote(prompt)
         seed = random.randint(0, 9999)
         
-        if img_provider == "Picsum (Stock)":
-            # Picsum doesn't support text prompts, so we use seed
-            url = f"https://picsum.photos/seed/{seed}/800/450"
+        size_str = IMAGE_SIZE_PRESETS.get(img_ratio, "1024*1024") if img_ratio else "1024*1024"
+        # data-mp-ratio so preview frame matches selected ratio (API now returns same ratio)
+        ratio_attr = f' data-mp-ratio="{img_ratio}"' if img_ratio else ""
+        # Width/height from ratio for Picsum and Placeholder (same ratio logic as AI images)
+        def _w_h_from_ratio():
+            if "*" in size_str:
+                parts = size_str.strip().split("*", 1)
+                try:
+                    return int(parts[0].strip()), int(parts[1].strip())
+                except (ValueError, IndexError):
+                    pass
+            return 800, 450
+        _img_w, _img_h = _w_h_from_ratio()
+        if img_provider == "Z-Image-Turbo (AI)":
+            # DashScope Z-Image-Turbo: use cache if same prompt+ratio; else generate and cache (respect daily limit)
+            url = _get_cached_ai_image(img_provider, prompt, img_ratio)
+            if not url and z_image_generate:
+                if ai_usage_is_over_limit(img_provider):
+                    try:
+                        st.session_state["ai_image_limit_reached"] = img_provider
+                    except Exception:
+                        pass
+                    fallback = f"https://placehold.co/{_img_w}x{_img_h}/EEE/31343C?text={encoded}"
+                    return f'\n<img src="{fallback}"{ratio_attr} {img_s} alt="AI Image (daily limit reached)">\n'
+                api_key = get_dashscope_api_key() if get_dashscope_api_key else None
+                url = z_image_generate(prompt.strip(), api_key=api_key, size=size_str)
+                if url:
+                    ai_usage_increment(img_provider)
+                    try:
+                        st.session_state["ai_image_quota_just_updated"] = True
+                        if ai_usage_get_remaining is not None:
+                            r = ai_usage_get_remaining(img_provider)
+                            if r is not None:
+                                st.session_state.setdefault("ai_image_quota_remaining", {})[img_provider] = r
+                    except Exception:
+                        pass
+                    _set_cached_ai_image(img_provider, prompt, url, img_ratio)
+            if url:
+                return f'\n<img src="{url}"{ratio_attr} {img_s} alt="AI Generated">\n'
+            fallback = f"https://placehold.co/{_img_w}x{_img_h}/EEE/31343C?text={encoded}"
+            return f'\n<img src="{fallback}"{ratio_attr} {img_s} alt="AI Image (unavailable - check API key or .env)">\n'
+        elif img_provider == "ModelScope (AI)":
+            # ModelScope 魔搭: use cache if same prompt+ratio; else generate and cache (respect daily limit)
+            url = _get_cached_ai_image(img_provider, prompt, img_ratio)
+            if not url and generate_image_modelscope:
+                if ai_usage_is_over_limit(img_provider):
+                    try:
+                        st.session_state["ai_image_limit_reached"] = img_provider
+                    except Exception:
+                        pass
+                    fallback = f"https://placehold.co/{_img_w}x{_img_h}/EEE/31343C?text={encoded}"
+                    return f'\n<img src="{fallback}"{ratio_attr} {img_s} alt="AI Image (daily limit reached)">\n'
+                api_key = get_modelscope_api_key() if get_modelscope_api_key else None
+                url = generate_image_modelscope(prompt.strip(), api_key=api_key, size=size_str)
+                if url:
+                    ai_usage_increment(img_provider)
+                    try:
+                        st.session_state["ai_image_quota_just_updated"] = True
+                        if ai_usage_get_remaining is not None:
+                            r = ai_usage_get_remaining(img_provider)
+                            if r is not None:
+                                st.session_state.setdefault("ai_image_quota_remaining", {})[img_provider] = r
+                    except Exception:
+                        pass
+                    _set_cached_ai_image(img_provider, prompt, url, img_ratio)
+            if url:
+                return f'\n<img src="{url}"{ratio_attr} {img_s} alt="AI Generated">\n'
+            fallback = f"https://placehold.co/{_img_w}x{_img_h}/EEE/31343C?text={encoded}"
+            return f'\n<img src="{fallback}"{ratio_attr} {img_s} alt="AI Image (unavailable - check API key or .env)">\n'
+        elif img_provider == "Picsum (Stock)":
+            # Picsum: dimensions match selected ratio (same as frame)
+            url = f"https://picsum.photos/seed/{seed}/{_img_w}/{_img_h}"
+            return f'\n<img src="{url}"{ratio_attr} {img_s} alt="Stock">\n'
         elif img_provider == "Placeholder (Text)":
-            # Simple placeholder with text
-            url = f"https://placehold.co/800x450/EEE/31343C?text={encoded}"
+            # Placeholder: dimensions match selected ratio (placehold.co WxH)
+            url = f"https://placehold.co/{_img_w}x{_img_h}/EEE/31343C?text={encoded}"
+            return f'\n<img src="{url}"{ratio_attr} {img_s} alt="Placeholder">\n'
         elif img_provider.startswith("Gradient"):
             # Beautiful CSS gradient images using inline SVG - compact and layout-friendly
             # These create modern, attractive gradient images without breaking layout
@@ -515,11 +645,9 @@ def apply_components(text, styles, mode="web", img_provider="Pollinations (AI)")
             
             return f'\n<img src="{url}" {img_s} alt="{display_text}" style="border-radius: 8px;">\n'
         else:
-            # Pollinations AI (Default)
-            # URL format: https://image.pollinations.ai/prompt/{encoded}?width=800&height=450&nologo=true&seed={seed}
-            url = f"https://image.pollinations.ai/prompt/{encoded}?width=800&height=450&nologo=true&seed={seed}"
-            
-        return f'\n<img src="{url}" {img_s} alt="AI Generated">\n'
+            # Fallback (e.g. unknown provider): Placeholder with ratio
+            url = f"https://placehold.co/{_img_w}x{_img_h}/EEE/31343C?text={encoded}"
+            return f'\n<img src="{url}"{ratio_attr} {img_s} alt="Placeholder">\n'
     
     # Case Insensitive regex for [IMG: ...]
     text = re.sub(r'\[IMG:\s*(.*?)\]', web_img_repl, text, flags=re.IGNORECASE)

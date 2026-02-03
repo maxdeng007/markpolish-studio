@@ -6,6 +6,52 @@ import time
 import os
 from datetime import datetime
 
+# Load .env for local dev (DASHSCOPE_API_KEY, MODELSCOPE_API_KEY etc.)
+def _load_env():
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    env_paths = [
+        os.path.join(app_dir, ".env"),  # project root (same dir as app.py)
+        ".env",                          # current working directory
+        os.path.join(os.getcwd(), ".env"),
+    ]
+    try:
+        from dotenv import load_dotenv
+        for path in env_paths:
+            if path and os.path.isfile(path):
+                load_dotenv(path, override=True)  # override so .env wins over empty env
+                break
+        # Also load from app_dir again with override so project .env always wins
+        project_env = os.path.join(app_dir, ".env")
+        if os.path.isfile(project_env):
+            load_dotenv(project_env, override=True)
+    except ImportError:
+        pass
+    # Fallback: manually read .env if key still missing (handles encoding/quirks)
+    want_keys = {"MODELSCOPE_API_KEY", "MODELSCOPE_SDK_TOKEN", "DASHSCOPE_API_KEY"}
+    env_canonical = {"modelscope_api_key": "MODELSCOPE_API_KEY", "modelscope_sdk_token": "MODELSCOPE_SDK_TOKEN", "dashscope_api_key": "DASHSCOPE_API_KEY"}
+    for path in [os.path.join(app_dir, ".env"), os.path.join(os.getcwd(), ".env"), ".env"]:
+        if not path or not os.path.isfile(path):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if "=" in line:
+                        k, _, v = line.partition("=")
+                        k, v = k.strip(), v.strip().strip('"').strip("'")
+                        if not v:
+                            continue
+                        canon = env_canonical.get(k.lower()) or (k if k in want_keys else None)
+                        if canon and not os.environ.get(canon):
+                            os.environ[canon] = v
+        except Exception:
+            pass
+        break
+
+_load_env()
+
 # --- UI TRANSLATIONS ---
 TRANSLATIONS = {
     "en": {
@@ -124,13 +170,18 @@ TRANSLATIONS = {
         "plugin_components_hint": "💡 Plugin components appear in 'Add Components' section above - just click to use!",
         "reload_plugins_help": "Reload plugins after creating new ones",
         "view_plugin_guide_help": "View plugin creation guide",
-        "image_source_help": "Default source for [IMG: prompt] tags. Pollinations AI is currently upgrading. Use Picsum or Placeholder options while waiting.",
+        "image_source_help": "Default source for [IMG: prompt] tags. ModelScope (魔搭) needs MODELSCOPE_API_KEY; Z-Image-Turbo needs DASHSCOPE_API_KEY (Secrets or .env).",
+        "image_ratio": "Image ratio",
+        "image_ratio_help": "Aspect ratio for AI images (Z-Image-Turbo / ModelScope) and for Picsum / Placeholder.",
+        "ai_image_quota": "Daily: {remaining}/{limit} left",
+        "ai_image_limit_switched": "Daily limit reached for {provider}. Switched to {fallback}.",
         "file_upload_limit": "Limit 200MB per file • PNG, JPG, JPEG, GIF",
         "preview_cached": "💡 Preview cached for performance ⚡ (cached)",
         "images_in_library": "{count} image(s) in library",
         "image_uploaded": "✅ Image uploaded!",
         "image_saved_to_library": "Image saved to library. You can reuse it from the Image Library above.",
         "preview_mode_help": "Mobile: WeChat/WeCom style | PC: Standard web style",
+        "view_language": "View & language",
         "tab_visual": "Visual",
         "tab_wechat_code": "WeChat Code",
         "tab_standard_html": "Standard HTML",
@@ -195,6 +246,7 @@ TRANSLATIONS = {
         "export_pdf": "📄 Export PDF",
         "export_word": "📝 Export Word",
         "download_html": "📥 Download HTML",
+        "copy_html_code": "📋 Copy HTML code",
         "download_pdf": "📥 Download PDF",
         "download_word": "📥 Download Word",
         "force_save": "💾 Force Save Now",
@@ -240,6 +292,8 @@ TRANSLATIONS = {
         "toast_deleted": "Deleted",
         "toast_auto_saved": "Auto-saved!",
         "toast_pdf_generated": "PDF generated! Click download to save.",
+        "toast_copied": "✅ Copied!",
+        "toast_copy_failed": "Copy failed. Press Ctrl/Cmd + C.",
     },
     "zh": {
         "app_title": "MarkPolish V1.0",
@@ -357,13 +411,18 @@ TRANSLATIONS = {
         "plugin_components_hint": "💡 插件组件出现在上方的「添加组件」部分 - 只需点击即可使用！",
         "reload_plugins_help": "创建新插件后重新加载",
         "view_plugin_guide_help": "查看插件创建指南",
-        "image_source_help": "[IMG: prompt] 标签的默认来源。Pollinations AI 正在升级中，等待期间请使用 Picsum 或占位符选项。",
+        "image_source_help": "[IMG: prompt] 标签的默认来源。ModelScope（魔搭）需配置 MODELSCOPE_API_KEY；Z-Image-Turbo 需配置 DASHSCOPE_API_KEY（Secrets 或 .env）。",
+        "image_ratio": "图片比例",
+        "image_ratio_help": "AI 图片及 Picsum / Placeholder 的宽高比。",
+        "ai_image_quota": "今日剩余：{remaining}/{limit}",
+        "ai_image_limit_switched": "今日 {provider} 已达上限，已切换为 {fallback}。",
         "file_upload_limit": "每个文件限制 200MB • PNG, JPG, JPEG, GIF",
         "preview_cached": "💡 预览已缓存以提升性能 ⚡（已缓存）",
         "images_in_library": "{count} 张图片在图库",
         "image_uploaded": "✅ 图片已上传！",
         "image_saved_to_library": "图片已保存到图库。可以在上方的图片库复用。",
         "preview_mode_help": "手机：微信/企业微信风格 | 电脑：标准网页风格",
+        "view_language": "视图与语言",
         "tab_visual": "可视化",
         "tab_wechat_code": "微信代码",
         "tab_standard_html": "标准 HTML",
@@ -428,6 +487,7 @@ TRANSLATIONS = {
         "export_pdf": "📄 导出 PDF",
         "export_word": "📝 导出 Word",
         "download_html": "📥 下载 HTML",
+        "copy_html_code": "📋 复制 HTML 代码",
         "download_pdf": "📥 下载 PDF",
         "download_word": "📥 下载 Word",
         "force_save": "💾 立即强制保存",
@@ -473,6 +533,8 @@ TRANSLATIONS = {
         "toast_deleted": "已删除",
         "toast_auto_saved": "自动保存！",
         "toast_pdf_generated": "PDF 已生成！点击下载保存。",
+        "toast_copied": "✅ 已复制！",
+        "toast_copy_failed": "复制失败，请按 Ctrl/Cmd + C。",
     }
 }
 
@@ -639,201 +701,10 @@ except ImportError:
         t = theme if isinstance(theme, dict) else {'bg': '#fff', 'text': '#000', 'font': 'Arial', 'primary': '#4A90E2'}
         return {'wrapper': f"background-color: {t.get('bg', '#fff')}; padding: 20px; min-height: 100%; box-sizing: border-box;"}
     def deep_inject_styles(html_content, styles): return html_content
-    def parse_doc(text, styles, img_provider="Pollinations (AI)", mode="wechat"): return text  # Return text as-is if module not available
+    def parse_doc(text, styles, img_provider="ModelScope (AI)", img_ratio="1:1", mode="wechat"): return text  # Return text as-is if module not available
     def clean_for_wechat(html): return html
     def insert_component_at_position(content, component_template, position): return content
     def get_stats(text): return 0, 0
-
-try:
-    from pdf_generator import generate_pdf, HAS_WEASYPRINT, HAS_PDFKIT, HAS_XHTML2PDF, HAS_REPORTLAB
-except ImportError:
-    def generate_pdf(html_content, theme, output_path=None, markdown_source=None, img_provider="Pollinations (AI)"): 
-        return None, "PDF module not available"
-    HAS_WEASYPRINT = False
-    HAS_PDFKIT = False
-    HAS_XHTML2PDF = False
-    HAS_REPORTLAB = False
-
-# Word Export
-try:
-    from docx import Document
-    from docx.shared import Inches, Pt, RGBColor
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.enum.style import WD_STYLE_TYPE
-    HAS_DOCX = True
-except ImportError:
-    HAS_DOCX = False
-
-def generate_word(markdown_content, theme):
-    """Generate Word document from markdown content - extracts text from components"""
-    if not HAS_DOCX:
-        return None, "Word export requires python-docx. Install with: pip install python-docx"
-    
-    try:
-        from io import BytesIO
-        import re as re_module
-        
-        doc = Document()
-        
-        # Get theme colors
-        primary_hex = theme.get('primary', '#4A90E2').lstrip('#')
-        text_hex = theme.get('text', '#333333').lstrip('#')
-        
-        def hex_to_rgb(hex_str):
-            return tuple(int(hex_str[i:i+2], 16) for i in (0, 2, 4))
-        
-        primary_rgb = hex_to_rgb(primary_hex)
-        text_rgb = hex_to_rgb(text_hex)
-        
-        # Pre-process: Clean ALL component syntax and extract only text
-        def clean_components(text):
-            """Strip ALL component syntax, HTML, and keep only plain text content"""
-            # Remove ALL lines starting with ::: (component markers)
-            text = re_module.sub(r'^:::.*$', '', text, flags=re_module.MULTILINE)
-            
-            # Remove [IMG: ...] placeholders (case insensitive)
-            text = re_module.sub(r'\[IMG:.*?\]', '', text, flags=re_module.IGNORECASE)
-            
-            # Remove --split-- column separators
-            text = text.replace('--split--', '')
-            
-            # Remove HTML tags but keep their text content
-            text = re_module.sub(r'<[^>]+>', '', text)
-            
-            # Remove style attributes and other HTML-like syntax
-            text = re_module.sub(r'style="[^"]*"', '', text)
-            
-            # Clean numbered list items in component format (1. text becomes just text in steps)
-            # Keep standard markdown numbered lists
-            
-            # Clean up multiple blank lines
-            text = re_module.sub(r'\n{3,}', '\n\n', text)
-            
-            # Remove lines that are just whitespace
-            lines = [line for line in text.split('\n') if line.strip() or line == '']
-            text = '\n'.join(lines)
-            
-            return text.strip()
-        
-        cleaned_content = clean_components(markdown_content)
-        
-        # Parse markdown line by line
-        lines = cleaned_content.split('\n')
-        current_list_items = []
-        in_code_block = False
-        code_content = []
-        
-        for line in lines:
-            stripped = line.strip()
-            
-            # Handle code blocks
-            if stripped.startswith('```'):
-                if in_code_block:
-                    # End code block
-                    if code_content:
-                        code_para = doc.add_paragraph()
-                        code_run = code_para.add_run('\n'.join(code_content))
-                        code_run.font.name = 'Courier New'
-                        code_run.font.size = Pt(10)
-                    code_content = []
-                    in_code_block = False
-                else:
-                    in_code_block = True
-                continue
-            
-            if in_code_block:
-                code_content.append(line)
-                continue
-            
-            # Skip empty lines
-            if not stripped:
-                # Flush list items if any
-                if current_list_items:
-                    for item in current_list_items:
-                        doc.add_paragraph(item, style='List Bullet')
-                    current_list_items = []
-                continue
-            
-            # Headers
-            if stripped.startswith('# '):
-                p = doc.add_heading(stripped[2:], level=1)
-                for run in p.runs:
-                    run.font.color.rgb = RGBColor(*primary_rgb)
-            elif stripped.startswith('## '):
-                p = doc.add_heading(stripped[3:], level=2)
-                for run in p.runs:
-                    run.font.color.rgb = RGBColor(*primary_rgb)
-            elif stripped.startswith('### '):
-                p = doc.add_heading(stripped[4:], level=3)
-            # List items
-            elif stripped.startswith('- ') or stripped.startswith('* '):
-                current_list_items.append(stripped[2:])
-            elif re_module.match(r'^\d+\.\s', stripped):
-                # Numbered list
-                text = re_module.sub(r'^\d+\.\s', '', stripped)
-                doc.add_paragraph(text, style='List Number')
-            # Blockquote
-            elif stripped.startswith('>'):
-                quote_text = stripped[1:].strip()
-                p = doc.add_paragraph()
-                p.paragraph_format.left_indent = Inches(0.5)
-                run = p.add_run(quote_text)
-                run.italic = True
-            # Horizontal rule
-            elif stripped in ['---', '***', '___']:
-                doc.add_paragraph('_' * 50)
-            # Regular paragraph
-            else:
-                # Flush list items first
-                if current_list_items:
-                    for item in current_list_items:
-                        doc.add_paragraph(item, style='List Bullet')
-                    current_list_items = []
-                
-                # Handle inline formatting
-                p = doc.add_paragraph()
-                
-                # Parse inline bold, italic, links
-                parts = re_module.split(r'(\*\*.*?\*\*|\*.*?\*|__.*?__|_.*?_|\[.*?\]\(.*?\))', stripped)
-                for part in parts:
-                    if part.startswith('**') and part.endswith('**'):
-                        run = p.add_run(part[2:-2])
-                        run.bold = True
-                        run.font.color.rgb = RGBColor(*primary_rgb)
-                    elif part.startswith('__') and part.endswith('__'):
-                        run = p.add_run(part[2:-2])
-                        run.bold = True
-                    elif part.startswith('*') and part.endswith('*') and not part.startswith('**'):
-                        run = p.add_run(part[1:-1])
-                        run.italic = True
-                    elif part.startswith('_') and part.endswith('_') and not part.startswith('__'):
-                        run = p.add_run(part[1:-1])
-                        run.italic = True
-                    elif re_module.match(r'\[.*?\]\(.*?\)', part):
-                        # Link - extract text and URL
-                        link_match = re_module.match(r'\[(.*?)\]\((.*?)\)', part)
-                        if link_match:
-                            link_text = link_match.group(1)
-                            run = p.add_run(link_text)
-                            run.font.color.rgb = RGBColor(*primary_rgb)
-                            run.underline = True
-                    else:
-                        p.add_run(part)
-        
-        # Flush remaining list items
-        if current_list_items:
-            for item in current_list_items:
-                doc.add_paragraph(item, style='List Bullet')
-        
-        # Save to BytesIO
-        buffer = BytesIO()
-        doc.save(buffer)
-        buffer.seek(0)
-        
-        return buffer.getvalue(), "✅ Word document generated successfully"
-    
-    except Exception as e:
-        return None, f"❌ Word generation error: {str(e)}"
 
 # Import templates from config if not already imported or empty
 if 'TEMPLATES' not in globals() or not TEMPLATES:
@@ -935,19 +806,19 @@ def main():
     
     query_params = st.query_params
     
+    # Copy toast handled in-component (HTML) for reliability
+    
     # Helper: enforce only one sidebar expander open (or all closed)
     def enforce_single_sidebar_open(state_dict):
         if not isinstance(state_dict, dict):
             return state_dict
         open_keys = [k for k, v in state_dict.items() if v]
-        preferred_default = "ai_assistant"
         if not open_keys:
-            # If nothing is open, fall back to preferred default
+            # If nothing is open, keep all closed (do not auto-open AI Assistant on rerun)
             for k in state_dict.keys():
-                state_dict[k] = (k == preferred_default)
-            st.session_state.last_sidebar_open = preferred_default
+                state_dict[k] = False
             return state_dict
-        preferred = st.session_state.get("last_sidebar_open") or (preferred_default if preferred_default in state_dict else None)
+        preferred = st.session_state.get("last_sidebar_open")
         target = preferred if (preferred and preferred in open_keys) else open_keys[-1]
         for k in state_dict.keys():
             state_dict[k] = (k == target)
@@ -1578,36 +1449,40 @@ def main():
         st.title(get_text("app_title"))
         st.caption(get_text("app_subtitle"))
         
-        # Settings Row: Simple Mode and Language Toggle
-        settings_col1, settings_col2 = st.columns(2)
-        with settings_col1:
-            simple_mode = st.toggle(f"✨ {get_text('simple_mode')}", value=st.session_state.get("simple_mode", True), key="simple_mode")
-        with settings_col2:
-            # Language toggle: False = English, True = Chinese
-            current_lang = st.session_state.get("ui_language", "en")
-            is_chinese = current_lang == "zh"
-            lang_toggle = st.toggle("🌐 中文", value=is_chinese, key="lang_toggle", help="Switch language / 切换语言")
-            new_lang = "zh" if lang_toggle else "en"
-            if new_lang != current_lang:
-                st.session_state.ui_language = new_lang
-                # Reset component filter when language changes to avoid stale toggle state
-                st.session_state.components_wechat_only = False
-                # Refresh AI status text to current language when not busy
-                if not st.session_state.get("ai_busy"):
-                    key = st.session_state.get("last_ai_status_key", "ai_status_idle")
-                    action_label = st.session_state.get("last_ai_status_action", "")
-                    if key == "ai_status_last_action" and action_label:
-                        st.session_state.last_ai_status = get_text(key).format(action=action_label)
-                    else:
-                        st.session_state.last_ai_status = get_text(key)
-                st.rerun()
-        
-        st.divider()
-        
+        # View & language: Simple Mode, Language, Preview Mode in one section
+        with st.expander(f"⚙️ {get_text('view_language')}", expanded=st.session_state.get("view_language_expanded", False)):
+            settings_col1, settings_col2 = st.columns(2)
+            with settings_col1:
+                simple_mode = st.toggle(f"✨ {get_text('simple_mode')}", value=st.session_state.get("simple_mode", True), key="simple_mode")
+            with settings_col2:
+                current_lang = st.session_state.get("ui_language", "en")
+                is_chinese = current_lang == "zh"
+                lang_toggle = st.toggle("🌐 中文", value=is_chinese, key="lang_toggle", help="Switch language / 切换语言")
+                new_lang = "zh" if lang_toggle else "en"
+                if new_lang != current_lang:
+                    st.session_state.ui_language = new_lang
+                    st.session_state.components_wechat_only = False
+                    if not st.session_state.get("ai_busy"):
+                        key = st.session_state.get("last_ai_status_key", "ai_status_idle")
+                        action_label = st.session_state.get("last_ai_status_action", "")
+                        if key == "ai_status_last_action" and action_label:
+                            st.session_state.last_ai_status = get_text(key).format(action=action_label)
+                        else:
+                            st.session_state.last_ai_status = get_text(key)
+                    st.rerun()
+            view = st.radio(
+                f"📱 {get_text('preview_mode')}",
+                [get_text('mobile_preview'), get_text('pc_preview')],
+                horizontal=True,
+                help=get_text("preview_mode_help"),
+                key="preview_view_radio"
+            )
+            st.session_state.preview_view = "Mobile" if view == get_text('mobile_preview') else "PC"
+
         # Initialize sidebar expander state memory
         if "sidebar_expanded" not in st.session_state:
             st.session_state.sidebar_expanded = {
-                "ai_assistant": True,  # Preferred default open
+                "ai_assistant": False,  # Folded by default
                 "files_templates": False,
                 "add_components": not simple_mode,
                 "appearance": not simple_mode,
@@ -1788,7 +1663,6 @@ def main():
                         st.session_state.context_text = ""
         
         # 2. FILES & TEMPLATES
-        st.divider()
         files_expanded = st.session_state.sidebar_expanded.get("files_templates", False)
         with st.expander(f"📂 {get_text('files_templates')}", expanded=files_expanded):
             file_tab, template_tab = st.tabs([f"📁 {get_text('files')}", f"📄 {get_text('templates')}"])
@@ -2080,7 +1954,6 @@ def main():
             # Migration Tool removed - users keep ## for headings, use ::: card for cards
             
         # 2. COMPONENTS (All component buttons in one expander)
-        st.divider()
         components_expanded = st.session_state.sidebar_expanded.get("add_components", not simple_mode)
         with st.expander(f"🧩 {get_text('add_components')}", expanded=components_expanded):
             st.caption(get_text("click_to_insert"))
@@ -2254,7 +2127,6 @@ def main():
                 st.toast(get_text("toast_components_unavailable"), icon="❌")
 
         # 3. APPEARANCE (Grouped settings)
-        st.divider()
         appearance_expanded = st.session_state.sidebar_expanded.get("appearance", not simple_mode)
         with st.expander(f"🎨 {get_text('appearance')}", expanded=appearance_expanded):
             t_name = st.selectbox(
@@ -2277,7 +2149,6 @@ def main():
         
         # 5. PLUGINS (Plugin System) - Simplified UX
         if get_plugin_registry and not simple_mode:
-            st.divider()
             plugins_expanded = st.session_state.sidebar_expanded.get("plugins", False)
             with st.expander(f"🔌 {get_text('plugins')}", expanded=plugins_expanded):
                 try:
@@ -2562,14 +2433,27 @@ def main():
                         ErrorHandler.log_error("plugin_ui", e)
         
         # 6. IMAGES & ASSETS (Grouped)
-        st.divider()
         images_expanded = st.session_state.sidebar_expanded.get("image_assets", False)
         with st.expander(f"🖼️ {get_text('image_assets')}", expanded=images_expanded):
+            
+            # When daily limit was reached during preview/PDF, switch provider to Picsum (Stock) and toast
+            limit_reached = st.session_state.pop("ai_image_limit_reached", None)
+            if limit_reached:
+                st.session_state.img_provider = "Picsum (Stock)"
+                st.session_state["img_provider_select"] = "Picsum (Stock)"
+                st.session_state.last_preview_content_hash = None
+                st.session_state["ai_image_limit_show_toast"] = (limit_reached, "Picsum (Stock)")
+                st.rerun()
+            # Show toast on the run after we switched (so it survives rerun)
+            toast_data = st.session_state.pop("ai_image_limit_show_toast", None)
+            if toast_data:
+                prev_provider, fallback_label = toast_data
+                st.toast(get_text("ai_image_limit_switched").format(provider=prev_provider, fallback=fallback_label), icon="⚠️")
             
             # Function to handle image provider change and re-render
             def on_image_provider_change():
                 new_provider = st.session_state.get("img_provider_select")
-                old_provider = st.session_state.get("img_provider", "Pollinations (AI)")
+                old_provider = st.session_state.get("img_provider", "ModelScope (AI)")
                 st.session_state.img_provider = new_provider
                 
                 # Only force re-render if the provider actually changed
@@ -2582,8 +2466,8 @@ def main():
                         st.session_state.performance_optimizer.preview_cache = {}
             
             img_provider = st.selectbox(
-                get_text("image_source"), 
-                ["Pollinations (AI)", "Picsum (Stock)", "Placeholder (Text)", 
+                get_text("image_source"),
+                ["ModelScope (AI)", "Z-Image-Turbo (AI)", "Picsum (Stock)", "Placeholder (Text)",
                  "Gradient (Blue)", "Gradient (Purple)", "Gradient (Sunset)",
                  "Gradient (Ocean)", "Gradient (Forest)", "Gradient (Aurora)",
                  "Gradient (Fire)", "Gradient (Midnight)",
@@ -2593,44 +2477,73 @@ def main():
                 on_change=on_image_provider_change
             )
             
+            # Daily quota: show immediately below image source when ModelScope or Z-Image-Turbo is selected
+            # Prefer session state (updated when we increment) so count updates right after AI generation
+            if img_provider in ("ModelScope (AI)", "Z-Image-Turbo (AI)"):
+                try:
+                    from ai_image_usage import get_remaining, get_limit
+                    remaining = st.session_state.get("ai_image_quota_remaining", {}).get(img_provider)
+                    if remaining is None:
+                        remaining = get_remaining(img_provider)
+                        if remaining is not None:
+                            st.session_state.setdefault("ai_image_quota_remaining", {})[img_provider] = remaining
+                    limit = get_limit(img_provider)
+                    r = remaining if remaining is not None else "--"
+                    l = limit if limit else (50 if img_provider == "ModelScope (AI)" else 10)
+                    st.caption("📊 " + get_text("ai_image_quota").format(remaining=r, limit=l))
+                except Exception:
+                    st.caption("📊 " + get_text("ai_image_quota").format(remaining="--", limit=50 if img_provider == "ModelScope (AI)" else 10))
+            
             # Update session state if changed (for backward compatibility)
             if st.session_state.get("img_provider") != img_provider:
                 st.session_state.img_provider = img_provider
             
-            # Check Pollinations Status Button
-            if img_provider == "Pollinations (AI)":
-                col_check1, col_check2 = st.columns([1, 1])
-                with col_check1:
-                    if st.button("🔄 Check AI Status", help="Check if Pollinations AI is back online", use_container_width=True, key="check_ai_status"):
-                        try:
-                            import urllib.request
-                            req = urllib.request.Request(
-                                "https://image.pollinations.ai/prompt/test?width=512&height=512",
-                                headers={'User-Agent': 'Mozilla/5.0'}
-                            )
-                            with urllib.request.urlopen(req, timeout=10) as response:
-                                if response.status == 200:
-                                    # Check if it's an image or upgrade page
-                                    content_type = response.headers.get('Content-Type', '')
-                                    if 'image' in content_type:
-                                        st.toast(get_text("toast_pollinations_online"), icon="✅")
-                                        st.session_state.pollinations_online = True
-                                    else:
-                                        st.toast(get_text("toast_pollinations_upgrade"), icon="⚠️")
-                                        st.session_state.pollinations_online = False
-                                else:
-                                    st.toast(get_text("toast_pollinations_not_responding"), icon="❌")
-                                    st.session_state.pollinations_online = False
-                        except Exception as e:
-                            st.toast(get_text("toast_pollinations_down"), icon="❌")
-                            st.session_state.pollinations_online = False
-                
-                # Show status indicator (inline only - no toast on page load)
-                with col_check2:
-                    if st.session_state.get('pollinations_online'):
-                        st.success("✓ " + get_text("toast_online"))
-                    else:
-                        st.warning("⏳ " + get_text("toast_checking"))
+            # Warn when ModelScope (魔搭) is selected but API key is missing or module not found
+            if img_provider == "ModelScope (AI)":
+                _load_env()  # ensure .env is loaded before key check
+                try:
+                    from z_image import get_modelscope_api_key
+                    key = get_modelscope_api_key() or os.getenv("MODELSCOPE_API_KEY") or os.getenv("MODELSCOPE_SDK_TOKEN")
+                except ImportError:
+                    st.error("AI image module (z_image.py) not found. Add z_image.py to the project folder and restart.")
+                    key = None
+                if key is not None and not (key and str(key).strip()):
+                    st.warning("Set MODELSCOPE_API_KEY in Secrets (Cloud) or .env (local) to use ModelScope (魔搭).")
+            # Warn when Z-Image-Turbo is selected but API key is missing or module not found
+            if img_provider == "Z-Image-Turbo (AI)":
+                _load_env()
+                try:
+                    from z_image import get_dashscope_api_key
+                    key = get_dashscope_api_key() or os.getenv("DASHSCOPE_API_KEY")
+                except ImportError:
+                    st.error("AI image module (z_image.py) not found. Add z_image.py to the project folder and restart.")
+                    key = None
+                if key is not None and not (key and str(key).strip()):
+                    st.warning("Set DASHSCOPE_API_KEY in Secrets (Cloud) or .env (local) to use Z-Image-Turbo.")
+
+            # Aspect ratio for AI images and for Picsum / Placeholder
+            if img_provider in ("Z-Image-Turbo (AI)", "ModelScope (AI)", "Picsum (Stock)", "Placeholder (Text)"):
+                img_ratio = st.selectbox(
+                    get_text("image_ratio"),
+                    options=["1:1", "16:9", "9:16"],
+                    index=0,
+                    help=get_text("image_ratio_help"),
+                    key="img_ratio_select",
+                )
+                if "img_ratio" not in st.session_state or st.session_state.get("img_ratio") != img_ratio:
+                    st.session_state.img_ratio = img_ratio
+            else:
+                img_ratio = st.session_state.get("img_ratio", "1:1")
+
+            # Refresh AI images: clear cache so [IMG: prompt] re-generates on next preview
+            if img_provider in ("Z-Image-Turbo (AI)", "ModelScope (AI)"):
+                if st.button("🔄 Refresh AI images", help="Clear cache and re-generate all [IMG: ...] images on next preview", use_container_width=True, key="refresh_ai_images"):
+                    if "ai_image_cache" in st.session_state:
+                        st.session_state["ai_image_cache"] = {}
+                    st.session_state["last_preview_content_hash"] = None
+                    if st.session_state.get("performance_optimizer"):
+                        st.session_state.performance_optimizer.preview_cache = {}
+                    st.toast("AI image cache cleared. Preview again to re-generate.", icon="✅")
             
             # Image Library (nested in Images & Assets)
             st.markdown(f"**📚 {get_text('image_library')}**")
@@ -2886,17 +2799,6 @@ def main():
             else:
                 st.toast(shortcode if shortcode else "Upload failed", icon="❌")
 
-        # 7. PREVIEW MODE (At the bottom)
-        st.divider()
-        view = st.radio(
-            f"📱 {get_text('preview_mode')}", 
-            [get_text('mobile_preview'), get_text('pc_preview')], 
-            horizontal=True,
-            help=get_text("preview_mode_help")
-        )
-        # Map back to English for internal use
-        st.session_state.preview_view = "Mobile" if view == get_text('mobile_preview') else "PC"
-
     # Restore auto-save prompt
     if st.session_state.get("show_restore_prompt", False):
         restore_content = st.session_state.get("restore_content", "")
@@ -2944,37 +2846,6 @@ def main():
             st.session_state.editor_content = current_content
         
         st.subheader(f"✒️ {get_text('editor')}")
-
-        # First-run / empty-state helper: quick template CTA in an expander-like frame
-        editor_has_text = bool((st.session_state.get("editor_content") or "").strip())
-        template_labels = {
-            "⚡ Quick Update": ("Quick Update", "快速更新"),
-            "📢 Product Launch": ("Product Launch", "产品发布"),
-            "📰 Weekly Newsletter": ("Weekly Newsletter", "每周通讯"),
-            "📌 Simple Notice": ("Simple Notice", "简易通知"),
-        }
-        recommended_templates = list(template_labels.keys())
-        available_recommended = [t for t in recommended_templates if t in TEMPLATES]
-        if not editor_has_text and available_recommended:
-            lang = st.session_state.get("ui_language", "en")
-            header = "✨ Start fast: apply a quick template below." if lang != "zh" else "✨ 快速开始：一键套用推荐模板。"
-            with st.expander(header, expanded=True):
-                rec_cols = st.columns(2)
-                for idx, tpl in enumerate(available_recommended):
-                    label_en, label_zh = template_labels.get(tpl, (tpl, tpl))
-                    label = label_en if lang != "zh" else label_zh
-                    col = rec_cols[idx % 2]
-                    with col:
-                        if st.button(label, use_container_width=True, key=f"rec_tpl_{idx}"):
-                            tpl_content = TEMPLATES.get(tpl, "")
-                            st.session_state.content = tpl_content
-                            st.session_state.editor_content = tpl_content
-                            st.session_state.reset_editor = True
-                            st.session_state.last_preview_content_hash = None
-                            st.session_state.undo_stack = [tpl_content] if tpl_content else []
-                            st.session_state.redo_stack = []
-                            st.toast(get_text("toast_template_loaded"))
-                            st.rerun()
 
         # Inline markdown syntax help
         with st.expander(f"📖 {get_text('markdown_help')}", expanded=False):
@@ -3983,8 +3854,9 @@ Right column
         # Get content from editor (prefer editor_content as it's the most up-to-date)
         content_to_render = st.session_state.get("editor_content") or st.session_state.get("content", "")
         
-        # Get image provider from session state (updated when changed in sidebar)
-        img_provider = st.session_state.get("img_provider", "Pollinations (AI)")
+        # Get image provider and ratio from session state (use widget value when available so ratio changes apply immediately)
+        img_provider = st.session_state.get("img_provider", "ModelScope (AI)")
+        img_ratio = st.session_state.get("img_ratio_select", st.session_state.get("img_ratio", "1:1"))
         
         # Initialize wechat_final to ensure it's always defined
         wechat_final = None
@@ -3997,7 +3869,8 @@ Right column
             optimizer = st.session_state.performance_optimizer
             
             theme_key = f"{active_theme.get('bg', '')}|{active_theme.get('primary', '')}"
-            cache_key = f"{content_to_render}|{theme_key}|{view}"
+            # Include img_provider and img_ratio so changing ratio/provider re-renders preview with correct image size
+            cache_key = f"{content_to_render}|{theme_key}|{view}|{img_provider}|{img_ratio}"
             cache_hash = hash(cache_key)
             
             cached_preview = optimizer.get_cached_preview(cache_key)
@@ -4042,7 +3915,7 @@ Right column
                     # Render fresh preview
                     try:
                         inline_styles = get_inline_styles(active_theme)
-                        parsed_md = parse_doc(content_to_render, inline_styles, img_provider=img_provider, mode="wechat")
+                        parsed_md = parse_doc(content_to_render, inline_styles, img_provider=img_provider, img_ratio=img_ratio, mode="wechat")
                 
                         # Ensure parsed_md is not empty - if parse_doc returns empty, use original content
                         if not parsed_md or not parsed_md.strip():
@@ -4096,6 +3969,10 @@ Right column
                         .mp-wechat ul, .mp-wechat ol {{padding-left: 20px; margin-bottom: 16px;}}
                         .mp-wechat strong {{font-weight: bold; color: {primary};}}
                         .mp-wechat img {{max-width: 100%; height: auto; display: block; margin: 12px auto; border-radius: {radius};}}
+                        /* AI images: frame aspect ratio matches selection (16:9 wide, 9:16 tall) */
+                        .mp-wechat img[data-mp-ratio="1:1"] {{aspect-ratio: 1; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
+                        .mp-wechat img[data-mp-ratio="16:9"] {{aspect-ratio: 16/9; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
+                        .mp-wechat img[data-mp-ratio="9:16"] {{aspect-ratio: 9/16; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
                         .mp-wechat .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center !important; border-radius: {radius}; margin: 0 0 25px 0; box-shadow: inherit;}}
                         .mp-wechat .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius}; box-shadow: inherit;}}
                         .mp-wechat .mp-card h3 {{margin-top: 0; color: {primary};}}
@@ -4134,10 +4011,10 @@ Right column
                         wechat_html_inner = f'{wechat_css}<div class="mp-wechat">{wechat_html_inner}</div>'
                         wechat_final = f'<div style="{wrapper_style}">{wechat_html_inner}</div>'
                 
-                        # Cache the preview (include theme + view in cache key)
+                        # Cache the preview (include theme, view, img_provider, img_ratio in cache key)
                         if PerformanceOptimizer and st.session_state.get("performance_optimizer"):
                             theme_key = f"{active_theme.get('bg', '')}|{active_theme.get('primary', '')}"
-                            cache_key = f"{content_to_render}|{theme_key}|{view}"
+                            cache_key = f"{content_to_render}|{theme_key}|{view}|{img_provider}|{img_ratio}"
                             st.session_state.performance_optimizer.cache_preview(cache_key, wechat_final)
                     except Exception as e:
                         # If rendering fails, try to show at least the raw markdown
@@ -4163,7 +4040,7 @@ Right column
         if 'parsed_md' not in locals():
             if content_to_render and content_to_render.strip():
                 inline_styles = get_inline_styles(active_theme)
-                parsed_md = parse_doc(content_to_render, inline_styles, img_provider=img_provider, mode="wechat")
+                parsed_md = parse_doc(content_to_render, inline_styles, img_provider=img_provider, img_ratio=img_ratio, mode="wechat")
             else:
                 parsed_md = ""
         
@@ -4290,7 +4167,7 @@ Right column
                     # Content exists but preview failed - force render one more time
                     try:
                         inline_styles = get_inline_styles(active_theme)
-                        parsed_md = parse_doc(content_to_render, inline_styles, img_provider=img_provider, mode="wechat")
+                        parsed_md = parse_doc(content_to_render, inline_styles, img_provider=img_provider, img_ratio=img_ratio, mode="wechat")
                         
                         # Ensure parsed_md is not empty - if parse_doc returns empty, use original content
                         if not parsed_md or not parsed_md.strip():
@@ -4341,6 +4218,9 @@ Right column
                         .mp-fallback .mp-timeline__item {{position: relative; padding-left: 20px; border-left: 2px solid {primary};}}
                         .mp-fallback .mp-timeline__dot {{position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: {primary};}}
                         .mp-fallback img {{max-width: 100%; height: auto;}}
+                        .mp-fallback img[data-mp-ratio="1:1"] {{aspect-ratio: 1; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
+                        .mp-fallback img[data-mp-ratio="16:9"] {{aspect-ratio: 16/9; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
+                        .mp-fallback img[data-mp-ratio="9:16"] {{aspect-ratio: 9/16; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
                         </style>
                         """
                         wechat_html_inner_final = f'<div class="mp-fallback">{wechat_html_inner_final}</div>'
@@ -4692,11 +4572,16 @@ body, html {{
             # Calculate height for mobile (frame + padding) or use fixed for desktop
             preview_height = 850 if not is_mobile else 820
             st.components.v1.html(preview_html, height=preview_height, scrolling=True)
+            # Refresh sidebar quota immediately after an AI image was generated this run
+            if st.session_state.pop("ai_image_quota_just_updated", False):
+                st.rerun()
         with t2:
             clean_code = clean_for_wechat(wechat_final)
             
-            # Copy button with hidden textarea for reliable copying
+            # Copy button with hidden textarea + toast styled like existing app toasts
             copy_button_text = get_text('copy_wechat_html')
+            toast_copied_text = get_text("toast_copied")
+            toast_failed_text = get_text("toast_copy_failed")
             copy_component = f"""
             <div style="margin-bottom: 10px;">
                 <textarea id="wechat-html-copy" style="position: absolute; left: -9999px; opacity: 0;">{clean_code.replace('</textarea>', '&lt;/textarea&gt;')}</textarea>
@@ -4711,47 +4596,76 @@ body, html {{
                     font-weight: 500;
                     margin-bottom: 10px;
                 ">{copy_button_text}</button>
-                <span id="copy-feedback" style="margin-left: 10px; color: green; font-size: 14px;"></span>
             </div>
             <script>
+            function showCopyToastWechat(ok) {{
+                const doc = window.parent && window.parent.document ? window.parent.document : document;
+                const id = 'copy-toast-wechat';
+                let toast = doc.getElementById(id);
+                if (!toast) {{
+                    toast = doc.createElement('div');
+                    toast.id = id;
+                    toast.style.position = 'fixed';
+                    toast.style.top = '20px';
+                    toast.style.right = '20px';
+                    toast.style.background = '#f6f6f6';
+                    toast.style.color = '#222';
+                    toast.style.border = '1px solid #e6e6e6';
+                    toast.style.borderRadius = '14px';
+                    toast.style.padding = '14px 18px';
+                    toast.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+                    toast.style.fontSize = '16px';
+                    toast.style.display = 'none';
+                    toast.style.alignItems = 'center';
+                    toast.style.gap = '10px';
+                    toast.style.zIndex = '999999';
+                    toast.style.cursor = 'default';
+                    toast.innerHTML = `
+                      <span id="copy-toast-icon-wechat" style="
+                        width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+                        border-radius: 6px; background: #18a118; color: #fff; font-weight: 700;">✓</span>
+                      <span id="copy-toast-text-wechat">{toast_copied_text}</span>
+                      <span id="copy-toast-close-wechat" style="margin-left: 8px; color: #888; cursor: pointer;">✕</span>
+                    `;
+                    doc.body.appendChild(toast);
+                    const close = doc.getElementById('copy-toast-close-wechat');
+                    if (close) close.onclick = () => (toast.style.display = 'none');
+                }}
+                const icon = doc.getElementById('copy-toast-icon-wechat');
+                const text = doc.getElementById('copy-toast-text-wechat');
+                if (ok) {{
+                    if (icon) {{
+                        icon.style.background = '#18a118';
+                        icon.textContent = '✓';
+                    }}
+                    if (text) text.textContent = `{toast_copied_text}`;
+                }} else {{
+                    if (icon) {{
+                        icon.style.background = '#d93025';
+                        icon.textContent = '!';
+                    }}
+                    if (text) text.textContent = `{toast_failed_text}`;
+                }}
+                toast.style.display = 'flex';
+                clearTimeout(window.__copyToastWechatTimer);
+                window.__copyToastWechatTimer = setTimeout(() => (toast.style.display = 'none'), 2000);
+            }}
             function copyWeChatHTML() {{
                 const textarea = document.getElementById('wechat-html-copy');
                 textarea.select();
-                textarea.setSelectionRange(0, 99999); // For mobile devices
-                
+                textarea.setSelectionRange(0, 99999);
                 try {{
-                    const successful = document.execCommand('copy');
-                    if (successful) {{
-                        const feedback = document.getElementById('copy-feedback');
-                        feedback.textContent = '✅ Copied!';
-                        feedback.style.color = 'green';
-                        setTimeout(function() {{
-                            feedback.textContent = '';
-                        }}, 2000);
-                    }} else {{
-                        // Fallback to modern API
-                        navigator.clipboard.writeText(textarea.value).then(function() {{
-                            const feedback = document.getElementById('copy-feedback');
-                            feedback.textContent = '✅ Copied!';
-                            feedback.style.color = 'green';
-                            setTimeout(function() {{
-                                feedback.textContent = '';
-                            }}, 2000);
-                        }}).catch(function(err) {{
-                            alert('Failed to copy. Please select and copy manually.');
-                        }});
-                    }}
-                }} catch (err) {{
-                    // Fallback to modern API
+                    if (document.execCommand('copy')) {{ showCopyToastWechat(true); return; }}
                     navigator.clipboard.writeText(textarea.value).then(function() {{
-                        const feedback = document.getElementById('copy-feedback');
-                        feedback.textContent = '✅ Copied!';
-                        feedback.style.color = 'green';
-                        setTimeout(function() {{
-                            feedback.textContent = '';
-                        }}, 2000);
-                    }}).catch(function(err) {{
-                        alert('Failed to copy. Please select and copy manually.');
+                        showCopyToastWechat(true);
+                    }}).catch(function() {{
+                        showCopyToastWechat(false);
+                    }});
+                }} catch (e) {{
+                    navigator.clipboard.writeText(textarea.value).then(function() {{
+                        showCopyToastWechat(true);
+                    }}).catch(function() {{
+                        showCopyToastWechat(false);
                     }});
                 }}
             }}
@@ -4762,66 +4676,103 @@ body, html {{
         with t3:
             size_bytes_export = len((st.session_state.get("content") or "").encode("utf-8")) if st.session_state.get("content") else 0
             size_kb_export = round(size_bytes_export / 1024)
-            last_export_ts = st.session_state.get("last_export_ts")
-            if last_export_ts:
-                last_export_str = datetime.fromtimestamp(last_export_ts).strftime("%Y-%m-%d %H:%M:%S")
-                st.caption(f"Export size: ~{size_kb_export} KB. WeChat/HTML best under ~120KB. Last export: {last_export_str}")
-            else:
-                st.caption(f"Export size: ~{size_kb_export} KB. WeChat/HTML best under ~120KB.")
-            col_pdf, col_word, col_html = st.columns(3)
-            with col_pdf:
-                # PDF Export
-                if HAS_WEASYPRINT or HAS_PDFKIT or HAS_XHTML2PDF or HAS_REPORTLAB:
-                    if st.button(get_text("export_pdf"), use_container_width=True, key="export_pdf_btn"):
-                        with st.spinner("Generating PDF..."):
-                            # Use markdown directly for cleaner PDF generation
-                            pdf_html = markdown.markdown(parsed_md, extensions=['nl2br', 'extra'])
-                            pdf_bytes, status = generate_pdf(pdf_html, active_theme, markdown_source=parsed_md, img_provider=img_provider)
-                            
-                            if pdf_bytes:
-                                st.session_state.last_export_ts = time.time()
-                                st.download_button(
-                                    get_text("download_pdf"),
-                                    pdf_bytes,
-                                    "article.pdf",
-                                    "application/pdf",
-                                    key="download_pdf"
-                                )
-                                st.toast(get_text("toast_pdf_generated"), icon="✅")
-                            else:
-                                # Show user-friendly error message
-                                if ErrorHandler:
-                                    ErrorHandler.show_error_with_details(status)
-                                else:
-                                    st.toast(f"❌ PDF failed: {status} / 请重试", icon="❌")
-                else:
-                    st.toast(get_text("toast_pdf_install_hint"), icon="💡")
-            
-            with col_word:
-                # Word Export
-                if HAS_DOCX:
-                    if st.button(get_text("export_word"), use_container_width=True, key="export_word_btn"):
-                        with st.spinner("Generating Word document..."):
-                            word_bytes, status = generate_word(parsed_md, active_theme)
-                            
-                            if word_bytes:
-                                st.session_state.last_export_ts = time.time()
-                                st.download_button(
-                                    get_text("download_word"),
-                                    word_bytes,
-                                    "article.docx",
-                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                    key="download_word"
-                                )
-                                st.toast(get_text("toast_word_generated"), icon="✅")
-                            else:
-                                st.toast(f"❌ Word failed: {status} / 请重试", icon="❌")
-                else:
-                    st.toast(get_text("toast_word_install_hint"), icon="💡")
-            
-            with col_html:
+            st.caption(f"Export size: ~{size_kb_export} KB. WeChat/HTML best under ~120KB.")
+            col_copy_std, col_download = st.columns(2)
+            with col_copy_std:
+                copy_std_text = get_text("copy_html_code")
+                toast_copied_text = get_text("toast_copied")
+                toast_failed_text = get_text("toast_copy_failed")
+                copy_std_component = f"""
+                <div style="margin-bottom: 10px;">
+                    <textarea id="standard-html-copy" style="position: absolute; left: -9999px; opacity: 0;">{standard_full.replace("</textarea>", "&lt;/textarea&gt;").replace("</script>", "&lt;/script&gt;").replace("<script", "&lt;script")}</textarea>
+                    <button onclick="copyStandardHTML()" style="
+                        background-color: #007AFF;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                    ">{copy_std_text}</button>
+                </div>
+                <script>
+                function showCopyToastStd(ok) {{
+                    const doc = window.parent && window.parent.document ? window.parent.document : document;
+                    const id = 'copy-toast-std';
+                    let toast = doc.getElementById(id);
+                    if (!toast) {{
+                        toast = doc.createElement('div');
+                        toast.id = id;
+                        toast.style.position = 'fixed';
+                        toast.style.top = '20px';
+                        toast.style.right = '20px';
+                        toast.style.background = '#f6f6f6';
+                        toast.style.color = '#222';
+                        toast.style.border = '1px solid #e6e6e6';
+                        toast.style.borderRadius = '14px';
+                        toast.style.padding = '14px 18px';
+                        toast.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+                        toast.style.fontSize = '16px';
+                        toast.style.display = 'none';
+                        toast.style.alignItems = 'center';
+                        toast.style.gap = '10px';
+                        toast.style.zIndex = '999999';
+                        toast.style.cursor = 'default';
+                        toast.innerHTML = `
+                          <span id="copy-toast-icon-std" style="
+                            width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+                            border-radius: 6px; background: #18a118; color: #fff; font-weight: 700;">✓</span>
+                          <span id="copy-toast-text-std">{toast_copied_text}</span>
+                          <span id="copy-toast-close-std" style="margin-left: 8px; color: #888; cursor: pointer;">✕</span>
+                        `;
+                        doc.body.appendChild(toast);
+                        const close = doc.getElementById('copy-toast-close-std');
+                        if (close) close.onclick = () => (toast.style.display = 'none');
+                    }}
+                    const icon = doc.getElementById('copy-toast-icon-std');
+                    const text = doc.getElementById('copy-toast-text-std');
+                    if (ok) {{
+                        if (icon) {{
+                            icon.style.background = '#18a118';
+                            icon.textContent = '✓';
+                        }}
+                        if (text) text.textContent = `{toast_copied_text}`;
+                    }} else {{
+                        if (icon) {{
+                            icon.style.background = '#d93025';
+                            icon.textContent = '!';
+                        }}
+                        if (text) text.textContent = `{toast_failed_text}`;
+                    }}
+                    toast.style.display = 'flex';
+                    clearTimeout(window.__copyToastStdTimer);
+                    window.__copyToastStdTimer = setTimeout(() => (toast.style.display = 'none'), 2000);
+                }}
+                function copyStandardHTML() {{
+                    const textarea = document.getElementById('standard-html-copy');
+                    textarea.select();
+                    textarea.setSelectionRange(0, 99999);
+                    try {{
+                        if (document.execCommand('copy')) {{ showCopyToastStd(true); return; }}
+                        navigator.clipboard.writeText(textarea.value).then(function() {{
+                            showCopyToastStd(true);
+                        }}).catch(function() {{
+                            showCopyToastStd(false);
+                        }});
+                    }} catch (e) {{
+                        navigator.clipboard.writeText(textarea.value).then(function() {{
+                            showCopyToastStd(true);
+                        }}).catch(function() {{
+                            showCopyToastStd(false);
+                        }});
+                    }}
+                }}
+                </script>
+                """
+                st.components.v1.html(copy_std_component, height=50)
+            with col_download:
                 st.download_button(get_text("download_html"), standard_full, "article.html", "text/html", use_container_width=True)
-            
             st.code(standard_full, language="html")
 
 if __name__ == "__main__":
