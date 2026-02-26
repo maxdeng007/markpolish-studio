@@ -3957,6 +3957,17 @@ Right column
                         primary = active_theme.get('primary', '#4A90E2')
                         card_bg = active_theme.get('card', '#fff')
                         radius = active_theme.get('radius', '12px')
+                        # Component table header text color: based on THEME background brightness
+                        bg_wc = str(active_theme.get('bg', '#ffffff')).lstrip('#')
+                        if len(bg_wc) == 6:
+                            r_wc = int(bg_wc[0:2], 16)
+                            g_wc = int(bg_wc[2:4], 16)
+                            b_wc = int(bg_wc[4:6], 16)
+                            lum_wc = 0.2126 * r_wc + 0.7152 * g_wc + 0.0722 * b_wc
+                            is_dark_wc = lum_wc < 128
+                        else:
+                            is_dark_wc = False
+                        header_color_wc = "#000000" if is_dark_wc else "white"
                         
                         wechat_css = f"""
                         <style>
@@ -3994,9 +4005,14 @@ Right column
                         .mp-wechat .mp-btn {{display: inline-block; padding: 10px 25px; background: {primary}; color: #fff; border-radius: {radius}; text-decoration: none; font-weight: bold;}}
                         .mp-wechat .mp-video {{position: relative; width: 100%; max-width: 900px; margin: 12px auto;}}
                         .mp-wechat .mp-video video {{width: 100%; height: auto; display: block;}}
-                        .mp-wechat .mp-table {{width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;}}
-                        .mp-wechat .mp-table th {{background: {primary}; color: #fff; padding: 12px 15px; text-align: left; border: 1px solid #ddd;}}
-                        .mp-wechat .mp-table td {{padding: 12px 15px; text-align: left; border: 1px solid #ddd;}}
+                        .mp-wechat .mp-table {{width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);}}
+                        .mp-wechat .mp-table th {{background: {primary}; color: {header_color_wc} !important; padding: 14px 16px; text-align: left; border: none; font-weight: 600; font-size: 14px;}}
+                        .mp-wechat .mp-table td {{padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee;}}
+                        
+                        /* Standard Markdown tables */
+                        .mp-wechat table {{width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; border: 1px solid #ddd;}}
+                        .mp-wechat table th,.mp-wechat table td {{border: 1px solid #ddd; padding: 10px 14px; text-align: left;}}
+                        .mp-wechat table th {{background: {primary}; color: {header_color_wc}; font-weight: bold;}}
                         .mp-wechat .mp-reveal {{position: relative; margin: 20px 0; cursor: pointer; overflow: hidden; border-radius: {radius};}}
                         .mp-wechat .mp-reveal__content {{padding: 15px; border: 1px dashed #ccc; border-radius: 8px; background: #fff; min-height: 100px;}}
                         /* Preserve inline styles from components */
@@ -4068,6 +4084,18 @@ Right column
         card_bg = t.get('card', '#fff')
         radius = t.get('radius', '12px')
         shadow = t.get('shadow', '0 4px 12px rgba(0,0,0,0.08)')
+        # Component table header text color: based on THEME background brightness
+        bg_std = str(t.get('bg', '#ffffff')).lstrip('#')
+        if len(bg_std) == 6:
+            r_std = int(bg_std[0:2], 16)
+            g_std = int(bg_std[2:4], 16)
+            b_std = int(bg_std[4:6], 16)
+            lum_std = 0.2126 * r_std + 0.7152 * g_std + 0.0722 * b_std
+            is_dark_std = lum_std < 128
+        else:
+            is_dark_std = False
+        header_color_std = "#000000" if is_dark_std else "white"
+        component_header_text_color = header_color_std
         
         component_css = f"""
         body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.75;color:{t['text']};background:{t['bg']};}}
@@ -4129,10 +4157,16 @@ Right column
         .mp-reveal__content{{padding:15px;border:1px dashed #ccc;border-radius:8px;background:#fff;min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;}}
         
         /* Table Component */
-        .mp-table{{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;}}
-        .mp-table th{{background:{primary};color:#fff;padding:12px 15px;text-align:left;border:1px solid #ddd;font-weight:bold;}}
-        .mp-table td{{padding:12px 15px;text-align:left;border:1px solid #ddd;}}
+        .mp-table{{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);}}
+        .mp-table th{{background:{primary};color:{component_header_text_color};padding:14px 16px;text-align:left;border:none;font-weight:600;font-size:14px;}}
+        .mp-table td{{padding:12px 16px;text-align:left;border-bottom:1px solid #eee;}}
         .mp-table tr:nth-child(even){{background:{card_bg}40;}}
+        
+        /* Standard Markdown tables */
+        table{{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #ddd;}}
+        table th,table td{{border:1px solid #ddd;padding:10px 14px;text-align:left;}}
+        table th{{background:{primary};color:{component_header_text_color};font-weight:bold;}}
+        table tr:nth-child(even) td{{background:{card_bg}40;}}
         
         /* Section/div with inline styles (WeChat mode components) */
         section[style*="background"],div[style*="background"]{{border-radius:{radius};padding:16px;margin:16px 0;}}
@@ -4268,6 +4302,19 @@ Right column
             font_family = active_theme.get('font', "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif")
             border_radius = active_theme.get('radius', '16px')
             shadow = active_theme.get('shadow', '0 1px 3px rgba(0,0,0,0.06)')
+            # Component table header text color: based on THEME background brightness
+            # Light theme (light bg) → white header text
+            # Dark theme (dark bg) → black header text
+            bg_hex = str(bg_color).lstrip('#')
+            if len(bg_hex) == 6:
+                r = int(bg_hex[0:2], 16)
+                g = int(bg_hex[2:4], 16)
+                b = int(bg_hex[4:6], 16)
+                luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+                is_dark = luminance < 128
+            else:
+                is_dark = False
+            component_header_text_color = "#000000" if is_dark else "white"
             
             # Mobile frame dimensions - iPhone 17 Pro style
             # Use session state which always has English values
@@ -4557,6 +4604,67 @@ body, html {{
 .mp-canvas > div {{
     max-width: 100% !important;
     box-sizing: border-box !important;
+}}
+
+/* Standard Markdown tables (GFM | syntax) - borders and alignment */
+.mp-canvas table {{
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 20px 0 !important;
+    font-size: 14px !important;
+    border: 1px solid #ddd !important;
+}}
+.mp-canvas table th,
+.mp-canvas table td {{
+    border: 1px solid #ddd !important;
+    padding: 10px 14px !important;
+    text-align: left !important;
+}}
+    .mp-canvas table th {{
+        background-color: {primary_color} !important;
+        color: {component_header_text_color} !important;
+        font-weight: bold !important;
+    }}
+    .mp-canvas .mp-table[data-mp-table="true"] {{
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 20px 0 !important;
+        font-size: 14px !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    }}
+    .mp-canvas .mp-table[data-mp-table="true"] th {{
+        background-color: {primary_color} !important;
+        color: {component_header_text_color} !important;
+        font-weight: 600 !important;
+        padding: 14px 16px !important;
+        text-align: left !important;
+        border: none !important;
+        font-size: 14px !important;
+    }}
+    .mp-canvas .mp-table[data-mp-table="true"] td {{
+        padding: 12px 16px !important;
+        text-align: left !important;
+        border-bottom: 1px solid #eee !important;
+        border: none !important;
+    }}
+    .mp-canvas .mp-table[data-mp-table="true"] tr:nth-child(even) {{
+        background-color: {card_bg}40 !important;
+    }}
+    .mp-canvas .mp-table[data-mp-table="true"] tr:hover {{
+        background-color: {card_bg}60 !important;
+    }}
+    .mp-canvas table tbody tr:nth-child(even) td {{
+        background-color: {accent_color} !important;
+    }}
+.mp-canvas table th[align="center"],
+.mp-canvas table td[align="center"] {{
+    text-align: center !important;
+}}
+.mp-canvas table th[align="right"],
+.mp-canvas table td[align="right"] {{
+    text-align: right !important;
 }}
 </style>
 </head>

@@ -64,6 +64,17 @@ def get_preview_css(theme, mode="Mobile"):
     primary_color = t.get('primary', '#4A90E2')
     card_bg = t.get('card', '#ffffff')
     shadow = t.get('shadow', '0 1px 3px rgba(0,0,0,0.06)')
+    # Component table header text color: based on THEME background brightness
+    bg_hex = str(bg_color).lstrip('#')
+    if len(bg_hex) == 6:
+        r = int(bg_hex[0:2], 16)
+        g = int(bg_hex[2:4], 16)
+        b = int(bg_hex[4:6], 16)
+        luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        is_dark = luminance < 128
+    else:
+        is_dark = False
+    component_header_text_color = "#000000" if is_dark else "white"
     
     # Pre-compute mobile-specific values
     is_mobile = (mode == "Mobile")
@@ -303,22 +314,59 @@ def get_preview_css(theme, mode="Mobile"):
         border-collapse: collapse !important;
         margin: 20px 0 !important;
         font-size: 14px !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }}
     .mp-table th {{
         background-color: {primary_color} !important;
-        color: white !important;
-        padding: 12px 15px !important;
+        color: {component_header_text_color} !important;
+        padding: 14px 16px !important;
         text-align: left !important;
-        border: 1px solid #ddd !important;
-        font-weight: bold !important;
+        border: none !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
     }}
     .mp-table td {{
-        padding: 12px 15px !important;
+        padding: 12px 16px !important;
         text-align: left !important;
-        border: 1px solid #ddd !important;
+        border-bottom: 1px solid #eee !important;
+        border: none !important;
     }}
     .mp-table tr:nth-child(even) {{
         background-color: {card_bg}40 !important;
+    }}
+    
+    /* Standard Markdown tables (GFM | syntax) - borders and alignment in preview */
+    .mp-canvas table {{
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 20px 0 !important;
+        font-size: 14px !important;
+        border: 1px solid #ddd !important;
+    }}
+    .mp-canvas table th,
+    .mp-canvas table td {{
+        border: 1px solid #ddd !important;
+        padding: 10px 14px !important;
+        text-align: left !important;
+    }}
+    .mp-canvas table th {{
+        background-color: {primary_color} !important;
+        color: {component_header_text_color} !important;
+        font-weight: bold !important;
+    }}
+    .mp-canvas table tbody tr:nth-child(even) td {{
+        background-color: {card_bg}40 !important;
+    }}
+    /* Respect alignment from markdown (e.g. | --- | ---: | for right-align) */
+    .mp-canvas table th[align="center"],
+    .mp-canvas table td[align="center"] {{
+        text-align: center !important;
+    }}
+    .mp-canvas table th[align="right"],
+    .mp-canvas table td[align="right"] {{
+        text-align: right !important;
     }}
     
     .mp-reveal {{
@@ -406,9 +454,21 @@ def get_inline_styles(theme):
     card_bg = t['card']
     radius = t['radius']
     shadow = t['shadow']
+    # Determine if theme is dark based on background luminance
+    bg_hex = str(t.get('bg', '#ffffff')).lstrip('#')
+    if len(bg_hex) == 6:
+        r = int(bg_hex[0:2], 16)
+        g = int(bg_hex[2:4], 16)
+        b = int(bg_hex[4:6], 16)
+        luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        is_dark = luminance < 128
+    else:
+        is_dark = False
     
     return {
         'primary': primary,
+        'dark': is_dark,
+        'bg': t.get('bg', '#ffffff'),
         'p': f"{font_base} margin-bottom: 16px;",
         'li': f"{font_base} margin-bottom: 8px;",
         'h1': f"font-family: {t['font']}; color: {primary}; font-size: 24px; font-weight: bold; margin-top: 30px; margin-bottom: 20px; line-height: 1.4; text-align: left;",
