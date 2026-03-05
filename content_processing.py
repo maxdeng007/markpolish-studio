@@ -95,8 +95,8 @@ def get_preview_css(theme, mode="Mobile"):
     else:
         frame_css = "width: 100%; height: 750px; border: 1px solid #ddd; border-radius: 8px;"
     
-    # Component-specific CSS with theme variables
-    hero_style = f"background-color: {card_bg} !important; padding: 35px 20px !important; text-align: center !important; border-radius: {radius} !important; margin: 0 0 25px 0 !important; box-shadow: {shadow} !important; box-sizing: border-box !important;"
+    # Component-specific CSS with theme variables (color !important so system dark/light theme cannot override)
+    hero_style = f"background-color: {card_bg} !important; padding: 35px 20px !important; text-align: center !important; border-radius: {radius} !important; margin: 0 0 25px 0 !important; box-shadow: {shadow} !important; box-sizing: border-box !important; color: {text_color} !important;"
     card_style = f"background-color: {card_bg} !important; border-left: 4px solid {primary_color} !important; padding: 20px !important; margin: 20px 0 !important; border-radius: {radius} !important; box-shadow: {shadow} !important; box-sizing: border-box !important;"
     step_num_style = f"background-color: {primary_color}; color: {bg_color}; width: 28px; height: 28px; min-width: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
     timeline_dot_style = f"background-color: {primary_color}; width: 12px; height: 12px; border-radius: 50%; position: absolute; left: -7px; top: 4px;"
@@ -157,8 +157,8 @@ def get_preview_css(theme, mode="Mobile"):
         padding: 20px; 
         box-sizing: border-box; 
         min-height: 100%;
-        background: {bg_color};
-        color: {text_color};
+        background: {bg_color} !important;
+        color: {text_color} !important;
         font-family: {font_family};
         width: 100%;
         overflow-wrap: break-word;
@@ -166,19 +166,19 @@ def get_preview_css(theme, mode="Mobile"):
         line-height: 1.75;
     }}
     
-    /* Base Typography - NO !important so inline styles from components win */
+    /* Base Typography - !important so system theme does not override our theme colors */
     .mp-canvas p,
     .mp-canvas li {{
-        color: {text_color};
+        color: {text_color} !important;
         font-family: {font_family};
         line-height: 1.75;
     }}
     .mp-canvas h1, .mp-canvas h2 {{
-        color: {text_color};
+        color: {primary_color} !important;
         font-family: {font_family};
     }}
     .mp-canvas h3, .mp-canvas h4, .mp-canvas h5, .mp-canvas h6 {{
-        color: {text_color};
+        color: {text_color} !important;
         font-family: {font_family};
     }}
     .mp-canvas strong {{
@@ -196,7 +196,8 @@ def get_preview_css(theme, mode="Mobile"):
     
     /* MarkPolish Component Classes - Overrides for preview */
     .mp-hero {{ {hero_style} }}
-    .mp-hero h1 {{ text-align: center; margin-top: 0; }}
+    .mp-hero h1 {{ text-align: center; margin-top: 0; color: {primary_color} !important; }}
+    .mp-hero p, .mp-hero span {{ color: {text_color} !important; }}
     
     .mp-card {{ {card_style} }}
     .mp-card h3 {{ margin-top: 0; font-size: 16px; color: {primary_color}; }}

@@ -3968,23 +3968,28 @@ Right column
                         else:
                             is_dark_wc = False
                         header_color_wc = "#000000" if is_dark_wc else "white"
+                        text_color_wc = active_theme.get('text', '#1D1D1F')
                         
                         wechat_css = f"""
                         <style>
-                        .mp-wechat {{font-family: inherit; line-height: 1.75; color: inherit;}}
-                        .mp-wechat p {{margin-bottom: 16px;}}
-                        .mp-wechat h1 {{color: {primary}; font-size: 24px; font-weight: bold; margin: 30px 0 20px 0;}}
-                        .mp-wechat h2 {{color: {primary}; font-size: 18px; font-weight: bold; margin: 30px 0 15px 0; border-bottom: 2px solid {primary}20; padding-bottom: 8px;}}
-                        .mp-wechat h3 {{font-size: 17px; font-weight: bold; margin: 20px 0 10px 0;}}
-                        .mp-wechat li {{margin-bottom: 8px;}}
+                        .mp-wechat {{font-family: inherit; line-height: 1.75; color: {text_color_wc} !important;}}
+                        .mp-wechat p {{margin-bottom: 16px; color: {text_color_wc} !important;}}
+                        .mp-wechat h1 {{color: {primary} !important; font-size: 24px; font-weight: bold; margin: 30px 0 20px 0;}}
+                        .mp-wechat h2 {{color: {primary} !important; font-size: 18px; font-weight: bold; margin: 30px 0 15px 0; border-bottom: 2px solid {primary}20; padding-bottom: 8px;}}
+                        .mp-wechat h3 {{color: {text_color_wc} !important; font-size: 17px; font-weight: bold; margin: 20px 0 10px 0;}}
+                        .mp-wechat li {{margin-bottom: 8px; color: {text_color_wc} !important;}}
                         .mp-wechat ul, .mp-wechat ol {{padding-left: 20px; margin-bottom: 16px;}}
-                        .mp-wechat strong {{font-weight: bold; color: {primary};}}
+                        .mp-wechat strong {{font-weight: bold; color: {primary} !important;}}
                         .mp-wechat img {{max-width: 100%; height: auto; display: block; margin: 12px auto; border-radius: {radius};}}
                         /* AI images: frame aspect ratio matches selection (16:9 wide, 9:16 tall) */
                         .mp-wechat img[data-mp-ratio="1:1"] {{aspect-ratio: 1; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
                         .mp-wechat img[data-mp-ratio="16:9"] {{aspect-ratio: 16/9; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
                         .mp-wechat img[data-mp-ratio="9:16"] {{aspect-ratio: 9/16; object-fit: contain; width: 100%; max-width: 100%; height: auto;}}
-                        .mp-wechat .mp-hero {{background: {card_bg}; padding: 35px 20px; text-align: center !important; border-radius: {radius}; margin: 0 0 25px 0; box-shadow: inherit;}}
+                        .mp-wechat .mp-hero {{background: {card_bg} !important; padding: 35px 20px; text-align: center !important; border-radius: {radius}; margin: 0 0 25px 0; box-shadow: inherit; color: {text_color_wc} !important;}}
+                        .mp-wechat .mp-hero p, .mp-wechat .mp-hero span {{color: {text_color_wc} !important;}}
+                        .mp-wechat .mp-hero h1 {{color: {primary} !important; text-align: center !important; margin-top: 0 !important;}}
+                        /* Hero as section (WeChat mode) - ensure title is centered in WeChat Code */
+                        .mp-wechat section[style*="text-align: center"] h1 {{text-align: center !important; margin-top: 0 !important; color: {primary} !important;}}
                         .mp-wechat .mp-card {{background: {card_bg}; border-left: 4px solid {primary}; padding: 15px; margin: 20px 0; border-radius: {radius}; box-shadow: inherit;}}
                         .mp-wechat .mp-card h3 {{margin-top: 0; color: {primary};}}
                         .mp-wechat .mp-center {{text-align: center !important; margin: 16px 0; width: 100%; box-sizing: border-box; background: transparent !important; box-shadow: none !important; padding: 0 !important; border: none !important; border-radius: 0 !important;}}
@@ -4097,21 +4102,24 @@ Right column
         header_color_std = "#000000" if is_dark_std else "white"
         component_header_text_color = header_color_std
         
+        color_scheme_std = "dark" if is_dark_std else "light"
         component_css = f"""
-        body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.75;color:{t['text']};background:{t['bg']};}}
+        html{{color-scheme:{color_scheme_std};}}
+        body{{font-family:{t['font']};padding:20px;max-width:800px;margin:0 auto;line-height:1.75;color:{t['text']} !important;background:{t['bg']} !important;}}
         img{{max-width:100%;height:auto;display:block;margin:12px auto;border-radius:{radius};}}
-        a{{color:{primary};text-decoration:none;}}
-        p{{margin:0 0 16px 0;line-height:1.75;}}
-        h1{{font-size:24px;font-weight:bold;color:{primary};margin:30px 0 20px 0;line-height:1.4;}}
-        h2{{font-size:18px;font-weight:bold;color:{primary};margin:30px 0 15px 0;border-bottom:2px solid {primary}20;padding-bottom:8px;}}
-        h3{{font-size:17px;font-weight:bold;margin:20px 0 10px 0;}}
+        a{{color:{primary} !important;text-decoration:none;}}
+        p{{margin:0 0 16px 0;line-height:1.75;color:{t['text']} !important;}}
+        h1{{font-size:24px;font-weight:bold;color:{primary} !important;margin:30px 0 20px 0;line-height:1.4;}}
+        h2{{font-size:18px;font-weight:bold;color:{primary} !important;margin:30px 0 15px 0;border-bottom:2px solid {primary}20;padding-bottom:8px;}}
+        h3{{font-size:17px;font-weight:bold;margin:20px 0 10px 0;color:{t['text']} !important;}}
         ul,ol{{padding-left:20px;margin:0 0 16px 0;}}
-        li{{margin:0 0 8px 0;line-height:1.75;}}
-        strong{{font-weight:bold;color:{primary};}}
+        li{{margin:0 0 8px 0;line-height:1.75;color:{t['text']} !important;}}
+        strong{{font-weight:bold;color:{primary} !important;}}
         
-        /* Hero Component */
-        .mp-hero{{background:{card_bg};padding:35px 20px;text-align:center !important;border-radius:{radius};margin:0 0 25px 0;box-shadow:{shadow};box-sizing:border-box;}}
-        .mp-hero h1{{text-align:center !important;margin-top:0 !important;}}
+        /* Hero Component - theme text color so system dark/light cannot override */
+        .mp-hero{{background:{card_bg} !important;padding:35px 20px;text-align:center !important;border-radius:{radius};margin:0 0 25px 0;box-shadow:{shadow};box-sizing:border-box;color:{t['text']} !important;}}
+        .mp-hero h1{{text-align:center !important;margin-top:0 !important;color:{primary} !important;}}
+        .mp-hero p,.mp-hero span{{color:{t['text']} !important;}}
         
         /* Card Component */
         .mp-card{{background:{card_bg};border-left:4px solid {primary};padding:15px;margin:20px 0;border-radius:{radius};box-shadow:{shadow};box-sizing:border-box;}}
@@ -4171,7 +4179,7 @@ Right column
         /* Section/div with inline styles (WeChat mode components) */
         section[style*="background"],div[style*="background"]{{border-radius:{radius};padding:16px;margin:16px 0;}}
         """
-        standard_full = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><style>{component_css}</style></head><body>{standard_html_content}</body></html>"""
+        standard_full = f"""<!DOCTYPE html><html style="color-scheme:{color_scheme_std};"><head><meta charset="UTF-8"><meta name="color-scheme" content="{color_scheme_std}"><style>{component_css}</style></head><body>{standard_html_content}</body></html>"""
         
         # Performance indicator (subtle, only when using cache)
         preview_status = ""
@@ -4315,6 +4323,8 @@ Right column
             else:
                 is_dark = False
             component_header_text_color = "#000000" if is_dark else "white"
+            # Prevent system dark/light theme from overriding our theme colors in the preview iframe
+            color_scheme = "dark" if is_dark else "light"
             
             # Mobile frame dimensions - iPhone 17 Pro style
             # Use session state which always has English values
@@ -4323,8 +4333,9 @@ Right column
             # Build complete HTML with embedded styles
             preview_html = f"""
 <!DOCTYPE html>
-<html>
+<html style="color-scheme: {color_scheme};">
 <head>
+<meta name="color-scheme" content="{color_scheme}">
 <style>
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body, html {{ 
@@ -4334,6 +4345,7 @@ body, html {{
     font-family: {font_family};
     overflow: visible;
     min-height: 100%;
+    color-scheme: {color_scheme};
 }}
 ::-webkit-scrollbar {{ display: none; }}
 
@@ -4433,12 +4445,12 @@ body, html {{
     scrollbar-width: none;
 }}
 
-/* Canvas - theme defaults */
+/* Canvas - theme defaults (use !important so system dark/light theme cannot override) */
 .mp-canvas {{ 
     padding: 16px !important;
     min-height: 100%;
-    background: {bg_color};
-    color: {text_color};
+    background: {bg_color} !important;
+    color: {text_color} !important;
     font-family: {font_family};
     width: 100% !important;
     max-width: 100% !important;
@@ -4448,44 +4460,44 @@ body, html {{
     overflow-x: hidden !important;
 }}
 
-/* Default text styles (NO !important - component inline styles override these) */
+/* Default text styles - !important so system theme does not change our theme colors */
 .mp-canvas p {{ 
-    color: {text_color}; 
+    color: {text_color} !important; 
     font-family: {font_family};
     line-height: 1.75;
     margin-bottom: 16px;
 }}
 .mp-canvas li {{ 
-    color: {text_color}; 
+    color: {text_color} !important; 
     font-family: {font_family};
     line-height: 1.75;
 }}
 .mp-canvas h1 {{ 
-    color: {primary_color}; 
+    color: {primary_color} !important; 
     font-family: {font_family};
     font-size: 24px;
     font-weight: bold;
     margin: 30px 0 20px 0;
 }}
 .mp-canvas h2 {{ 
-    color: {primary_color}; 
+    color: {primary_color} !important; 
     font-family: {font_family};
     font-size: 18px;
     font-weight: bold;
     margin: 30px 0 15px 0;
 }}
 .mp-canvas h3 {{ 
-    color: {text_color}; 
+    color: {text_color} !important; 
     font-family: {font_family};
     font-size: 17px;
     font-weight: bold;
     margin: 20px 0 10px 0;
 }}
 
-/* Hero Component - override general h1 for hero sections */
+/* Hero Component - override general h1 for hero sections; lock text color to theme (ignore system dark/light) */
 .mp-canvas .mp-hero,
 .mp-canvas section[style*="text-align: center"] {{
-    background: {card_bg};
+    background: {card_bg} !important;
     padding: 35px 20px;
     text-align: center !important;
     border-radius: {border_radius};
@@ -4493,12 +4505,23 @@ body, html {{
     box-shadow: {shadow};
     box-sizing: border-box;
     width: 100%;
+    color: {text_color} !important;
+}}
+/* Hero subtitle and any non-heading text - use theme text color, not system */
+.mp-canvas .mp-hero p,
+.mp-canvas .mp-hero span,
+.mp-canvas .mp-hero div:not([class]) {{
+    color: {text_color} !important;
+}}
+.mp-canvas section[style*="text-align: center"] p,
+.mp-canvas section[style*="text-align: center"] span {{
+    color: {text_color} !important;
 }}
 .mp-canvas .mp-hero h1,
 .mp-canvas section[style*="text-align: center"] h1 {{
     text-align: center !important;
     margin-top: 0 !important;
-    color: {primary_color};
+    color: {primary_color} !important;
     font-size: 24px;
     font-weight: bold;
 }}
@@ -4513,13 +4536,13 @@ body, html {{
     box-shadow: {shadow};
 }}
 .mp-canvas strong {{ 
-    color: {primary_color}; 
+    color: {primary_color} !important; 
     font-weight: bold;
 }}
 .mp-canvas blockquote {{
     border-left: 4px solid {primary_color};
     padding-left: 15px;
-    color: {muted_color};
+    color: {muted_color} !important;
     font-style: italic;
     background: {accent_color};
     padding: 10px 10px 10px 15px;
@@ -4527,7 +4550,7 @@ body, html {{
     border-radius: 0 {border_radius} {border_radius} 0;
 }}
 .mp-canvas a {{
-    color: {primary_color};
+    color: {primary_color} !important;
     text-decoration: none;
 }}
 .mp-canvas a:hover {{
